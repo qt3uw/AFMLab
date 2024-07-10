@@ -20,3 +20,4 @@ plt.ylabel('y pos [microns]')
 # plt.colorbar(label="Z piezo voltage [V]")
 plt.colorbar(label="Z piezo displacement [nm]")
 plt.show()
+
