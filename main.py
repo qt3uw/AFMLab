@@ -19,13 +19,12 @@ def get_afm_data(folder_path):
             # Read the CSV file into a numpy array
             with open(file_path, 'r') as f:
                 df = pd.read_csv(f, delimiter=';', header=None)
-                df.dropna(axis=1, how='all', inplace=True)
+                array = df.to_numpy()[:, :-1].astype(float)
 
             # Append the numpy array to the list
-            array_list.append(df)
+            array_list.append(array)
 
     return array_list
-
 
 
 def create_image(filepath):
@@ -52,5 +51,13 @@ def create_image(filepath):
 
 
 if __name__ == '__main__':
-    dataframes = get_afm_data(DATA_DIR)
-    print(dataframes[0])
+    AFMdata = get_afm_data(DATA_DIR)
+    print(AFMdata[0])
+    # Plot numpy array
+    fig, ax = plt.subplots(1, 1)
+    cax = ax.imshow(AFMdata[0])
+    fig.colorbar(cax)
+    ax.set_title('Piezo voltage image from AFM')
+    ax.set_xlabel('x pos [microns]')
+    ax.set_ylabel('y pos [microns]')
+    plt.show()
