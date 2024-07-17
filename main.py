@@ -27,6 +27,7 @@ def get_afm_data(folder_path):
     return array_list
 
 
+
 def create_image(filepath):
     # convert piezo voltage data into an array
     # filepath = Path(r"C:\Users\QT3\Documents\EDUAFM Data\TestSample_ConstantForce_StrainGauge_100px_100pps.csv")
