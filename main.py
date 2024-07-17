@@ -27,37 +27,17 @@ def get_afm_data(folder_path):
     return array_list
 
 
-def create_image(filepath):
-    # convert piezo voltage data into an array
-    # filepath = Path(r"C:\Users\QT3\Documents\EDUAFM Data\TestSample_ConstantForce_StrainGauge_100px_100pps.csv")
-    volt_data = np.loadtxt(filepath, dtype=float, delimiter=';')
-    print(volt_data)
-    print(np.size(volt_data))
-    # convert piezo voltage to height displacement
-    # *100 because .Normalize() normalizes between 0 and 1
-    # height_data = colors.Normalize()(volt_data) * 100
-    # print(height_data)
-    # create colormap of data
-    x, y = np.mgrid[0:20:0.2, 0:20:0.2]
-    v = volt_data
-    # z = height_data
-    plt.pcolormesh(x, y, v, cmap='Greys')
-    plt.title("AFM Scan")
-    plt.xlabel('x pos [microns]')
-    plt.ylabel('y pos [microns]')
-    plt.colorbar(label="Z piezo voltage [V]")
-    # plt.colorbar(label="Z piezo displacement [nm]")
+def create_image(data):
+    fig, ax = plt.subplots(1, 1)
+    cax = ax.imshow(data)
+    fig.colorbar(cax)
+    ax.set_title('Piezo voltage image from AFM')
+    ax.set_xlabel('x pos [microns]')
+    ax.set_ylabel('y pos [microns]')
     plt.show()
 
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     print(AFMdata[0])
-    # Plot numpy array
-    fig, ax = plt.subplots(1, 1)
-    cax = ax.imshow(AFMdata[0])
-    fig.colorbar(cax)
-    ax.set_title('Piezo voltage image from AFM')
-    ax.set_xlabel('x pos [microns]')
-    ax.set_ylabel('y pos [microns]')
-    plt.show()
+    create_image(AFMdata[0])
