@@ -1,14 +1,31 @@
 import numpy as np
 from matplotlib import pyplot as plt, colors
 from pathlib import Path
+import os
+import pandas as pd
+
+DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM Data')
 
 
-def get_afm_data(filepath):
-    volt_data = np.loadtxt(filepath, dtype=float, delimiter=';')
-    keys = ["name", "scan mode", "strain gauge", "resolution", "scan speed"]
-    get_string = str(filepath)
-    np.loadtxt(get_string, dtype=str, delimiter='_')
-    # scan_params = {name: ; mode: ; resolution: }
+def get_afm_data(folder_path):
+    # Initialize an empty list to store data frames
+    array_list = []
+
+    # Iterate over all files in the directory
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith('.csv'):
+            file_path = os.path.join(folder_path, file_name)
+
+            # Read the CSV file into a numpy array
+            with open(file_path, 'r') as f:
+                df = pd.read_csv(f, delimiter=';', header=None)
+                df.dropna(axis=1, how='all', inplace=True)
+
+            # Append the numpy array to the list
+            array_list.append(df)
+
+    return array_list
+
 
 def create_image(filepath):
     # convert piezo voltage data into an array
@@ -31,3 +48,8 @@ def create_image(filepath):
     plt.colorbar(label="Z piezo voltage [V]")
     # plt.colorbar(label="Z piezo displacement [nm]")
     plt.show()
+
+
+if __name__ == '__main__':
+    dataframes = get_afm_data(DATA_DIR)
+    print(dataframes[0])
