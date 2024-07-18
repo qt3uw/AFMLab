@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt, colors
 from pathlib import Path
 import os
 import pandas as pd
-from skimage import feature
+from skimage import feature, filters
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM Data')
 
@@ -41,7 +41,7 @@ def get_afm_data(folder_path):
 
 def create_image(data):
     fig, ax = plt.subplots(1, 1)
-    cax = ax.imshow(data)
+    cax = ax.imshow(data, extent=[0, 20, 0, 20])
     fig.colorbar(cax)
     ax.set_title('Piezo voltage image from AFM')
     ax.set_xlabel('x pos [microns]')
@@ -50,19 +50,28 @@ def create_image(data):
 
 
 def get_edge(image):
-    array = feature.canny(image, sigma=2.6)
-    fig, ax = plt.subplots(1, 1)
-    ax.imshow(array)
-    ax.set_title('Edges of AFM Scan')
-    ax.set_xlabel('x pos [microns]')
-    ax.set_ylabel('y pos [microns]')
+    canny = feature.canny(image, sigma=2.6)
+    farid = filters.farid(image)
+    laplace = filters.laplace(image)
+    prewitt = filters.prewitt(image)
+    roberts = filters.roberts(image)
+    scharr = filters.scharr(image)
+    edges = [canny, farid, laplace, prewitt, roberts, scharr]
+    fig, ax = plt.subplots(1, 6)
+    i = 0
+    for edge in edges:
+        ax[i].imshow(edge, extent=[0, 20, 0, 20])
+        ax[i].set_title('Edges of AFM Scan')
+        ax[i].set_xlabel('x pos [microns]')
+        ax[i].set_ylabel('y pos [microns]')
+        i = i + 1
     plt.show()
 
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
-    for tup in AFMdata[10:20]:
+    for tup in AFMdata[16:17]:
         if tup[0][2] == 'StrainGauge':
             print('\n'.join(str(item) for item in tup))
-            create_image(tup[1])
+            # create_image(tup[1])
             get_edge(tup[1])
