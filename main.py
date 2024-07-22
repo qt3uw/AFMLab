@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from skimage import feature, filters
 
-DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM Data')
+DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 
 
 def get_afm_data(folder_path):
@@ -40,13 +40,16 @@ def get_afm_data(folder_path):
     return tuple_list
 
 
-def create_image(data, info):
-    width = float(info[info.index("zoom") + 1][:-6])
+def create_image(data, data_info):
+    # Get width of scan from data_info
+    width = float(data_info[data_info.index("zoom") + 1][:-6])
     # check if image is a zoomed image
-    if "zoom" in info:
+    if "zoom" in data_info:
         extent = [0, width, width, 0]
     else:
         extent = [0, 20, 20, 0]
+
+    # Create color plot of data
     fig, ax = plt.subplots(1, 1)
     cax = ax.imshow(data, extent=extent)
     fig.colorbar(cax)
@@ -56,23 +59,24 @@ def create_image(data, info):
     # plt.show()
 
 
-def get_edge(image, image_info):
+def get_edge(image, image_info, dx, dy):
     # Get width of scan from image_info
     width = float(image_info[image_info.index("zoom") + 1][:-6])
+    ppm = np.shape(image)[0] / width
 
     # Create two plots for horizontal and vertical scans
     fig1, ax1 = plt.subplots(2, 1)
     # sliced horizontal and vertical scans in midpoints of the image
-    z_x = image[int(np.shape(image)[0] / 2), :]
-    z_y = image[:, int(np.shape(image)[0] / 2)]
+    z_x = image[int(np.shape(image)[0] / 2 + (dx * ppm)), :]
+    z_y = image[:, int(np.shape(image)[0] / 2 + (dy * ppm))]
     # horizontal and vertical scales from size of zoomed image
     x = np.linspace(0, width, len(z_x))
     y = np.linspace(width, 0, len(z_y))
     # plot x and y against sliced voltage data
     ax1[0].plot(x, z_x)
     ax1[1].plot(y, z_y)
-    ax1[0].text(x[0], z_x[0], "y = " + str(width / 2))
-    ax1[1].text(y[len(y)-1], z_y[len(z_y)-1], "x = " + str(width / 2))
+    ax1[0].text(x[0], z_x[0], "y = " + str(width / 2 + dx))
+    ax1[1].text(y[len(y)-1], z_y[len(z_y)-1], "x = " + str(width / 2 + dy))
     ax1[0].set_title('Horizontal Edge Resolution')
     ax1[1].set_title('Vertical Edge Resolution')
     ax1[0].set_xlabel('x pos [microns]')
@@ -90,4 +94,4 @@ if __name__ == '__main__':
         if param in tup[0]:
             print('\n'.join(str(item) for item in tup))
             create_image(tup[1], tup[0])
-            get_edge(tup[1], tup[0])
+            get_edge(tup[1], tup[0], 0, 0)
