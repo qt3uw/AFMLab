@@ -59,39 +59,45 @@ def create_image(data, data_info):
     # plt.show()
 
 
-def get_edge(image, image_info, dx, dy):
-    # Get width of scan from image_info
-    width = float(image_info[image_info.index("zoom") + 1][:-6])
-    ppm = np.shape(image)[0] / width
-
+def get_edge(images, dx, dy):
     # Create two plots for horizontal and vertical scans
     fig1, ax1 = plt.subplots(2, 1)
-    # sliced horizontal and vertical scans in midpoints of the image
-    z_x = image[int(np.shape(image)[0] / 2 + (dx * ppm)), :]
-    z_y = image[:, int(np.shape(image)[0] / 2 + (dy * ppm))]
-    # horizontal and vertical scales from size of zoomed image
-    x = np.linspace(0, width, len(z_x))
-    y = np.linspace(width, 0, len(z_y))
-    # plot x and y against sliced voltage data
-    ax1[0].plot(x, z_x)
-    ax1[1].plot(y, z_y)
-    ax1[0].text(x[0], z_x[0], "y = " + str(width / 2 + dx))
-    ax1[1].text(y[len(y)-1], z_y[len(z_y)-1], "x = " + str(width / 2 + dy))
-    ax1[0].set_title('Horizontal Edge Resolution')
-    ax1[1].set_title('Vertical Edge Resolution')
-    ax1[0].set_xlabel('x pos [microns]')
-    ax1[1].set_xlabel('y pos [microns]')
-    ax1[0].set_ylabel('Z Piezo Voltage')
-    ax1[1].set_ylabel('Z Piezo Voltage')
 
+    for image in images:
+        # Get width of scan from image_info
+        width = float(image[0][image[0].index("zoom") + 1][:-6])
+        ppm = np.shape(image[1])[0] / width
+
+        # sliced horizontal and vertical scans in midpoints of the image
+        z_x = image[1][int(np.shape(image[1])[0] / 2 + (dx * ppm)), :]
+        z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
+        # horizontal and vertical scales from size of zoomed image
+        x = np.linspace(0, width, len(z_x))
+        y = np.linspace(width, 0, len(z_y))
+
+        # plot x and y against sliced voltage data
+        ax1[0].plot(x, z_x)
+        ax1[1].plot(y, z_y)
+        ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)], str(image[0][4]))
+        ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)], str(image[0][4]))
+        ax1[0].set_title('Horizontal Edge Resolution')
+        ax1[1].set_title('Vertical Edge Resolution')
+        ax1[0].set_xlabel('x pos [microns]')
+        ax1[1].set_xlabel('y pos [microns]')
+        ax1[0].set_ylabel('Z Piezo Voltage')
+        ax1[1].set_ylabel('Z Piezo Voltage')
     plt.show()
 
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
-    param = "zoom"
+    includes = ["zoom", "backward"]
+    excludes = []
+    edge_image = []
     for tup in AFMdata:
-        if param in tup[0]:
+        if (all(include in tup[0] for include in includes) and
+                all(exclude not in tup[0] for exclude in excludes)):
             print('\n'.join(str(item) for item in tup))
             create_image(tup[1], tup[0])
-            get_edge(tup[1], tup[0], 0, 0)
+            edge_image.append(tup)
+    get_edge(edge_image, 0, 0)
