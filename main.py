@@ -59,40 +59,44 @@ def create_image(data, data_info):
     # plt.show()
 
 
-def find_edge(images, dx, dy):
+def find_edges(images, dx, dy):
     # Initialize list of arrays for sliced data
     slices = []
 
     # Create two plots for horizontal and vertical scans
     fig1, ax1 = plt.subplots(2, 1)
 
-    # Loop through all zoomed images
+    # Loop through all images
     for image in images:
-        # Get width of scan from image_info
-        width = float(image[0][image[0].index("zoom") + 1][:-6])
-        ppm = np.shape(image[1])[0] / width
+        # Only execute find_edge for zoomed images
+        if "zoom" not in image[0]:
+            return
+        else:
+            # Get width of scan from image_info
+            width = float(image[0][image[0].index("zoom") + 1][:-6])
+            ppm = np.shape(image[1])[0] / width
 
-        # sliced horizontal and vertical scans in midpoints of the image
-        z_x = image[1][int(np.shape(image[1])[0] / 2 + (dx * ppm)), :]
-        z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
-        # horizontal and vertical scales from size of zoomed image
-        x = np.linspace(0, width, len(z_x))
-        y = np.linspace(width, 0, len(z_y))
+            # sliced horizontal and vertical scans in midpoints of the image
+            z_x = image[1][int(np.shape(image[1])[0] / 2 + (dx * ppm)), :]
+            z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
+            # horizontal and vertical scales from size of zoomed image
+            x = np.linspace(0, width, len(z_x))
+            y = np.linspace(width, 0, len(z_y))
 
-        # plot x and y against sliced voltage data
-        ax1[0].plot(x, z_x)
-        ax1[1].plot(y, z_y)
-        ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)]+0.1, str(image[0][4]))
-        ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)]+0.1, str(image[0][4]))
-        ax1[0].set_title('Horizontal Edge Resolution')
-        ax1[1].set_title('Vertical Edge Resolution')
-        ax1[0].set_xlabel('x pos [microns]')
-        ax1[1].set_xlabel('y pos [microns]')
-        ax1[0].set_ylabel('Z Piezo Voltage')
-        ax1[1].set_ylabel('Z Piezo Voltage')
+            # plot x and y against sliced voltage data
+            ax1[0].plot(x, z_x)
+            ax1[1].plot(y, z_y)
+            ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)]+0.1, str(image[0][4]))
+            ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)]+0.1, str(image[0][4]))
+            ax1[0].set_title('Horizontal Edge Resolution')
+            ax1[1].set_title('Vertical Edge Resolution')
+            ax1[0].set_xlabel('x pos [microns]')
+            ax1[1].set_xlabel('y pos [microns]')
+            ax1[0].set_ylabel('Z Piezo Voltage')
+            ax1[1].set_ylabel('Z Piezo Voltage')
 
-        # Add sliced data to list
-        slices.append(np.array((z_x, z_y)))
+            # Add sliced data to list
+            slices.append(np.array((z_x, z_y)))
 
     plt.show()
 
@@ -103,12 +107,12 @@ if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     includes = ["zoom", "backward"]
     excludes = []
-    edge_image = []
+    edge_images = []
     for tup in AFMdata:
         if (all(include in tup[0] for include in includes) and
                 all(exclude not in tup[0] for exclude in excludes)):
             # print('\n'.join(str(item) for item in tup))
             # create_image(tup[1], tup[0])
-            edge_image.append(tup)
-    edges = find_edge(edge_image, 0, 0)
+            edge_images.append(tup)
+    edges = find_edges(edge_images, 0, 0)
     # print('\n'.join(str(item) for item in edges))
