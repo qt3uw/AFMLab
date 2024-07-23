@@ -59,10 +59,14 @@ def create_image(data, data_info):
     # plt.show()
 
 
-def get_edge(images, dx, dy):
+def find_edge(images, dx, dy):
+    # Initialize list of arrays for sliced data
+    slices = []
+
     # Create two plots for horizontal and vertical scans
     fig1, ax1 = plt.subplots(2, 1)
 
+    # Loop through all zoomed images
     for image in images:
         # Get width of scan from image_info
         width = float(image[0][image[0].index("zoom") + 1][:-6])
@@ -78,15 +82,21 @@ def get_edge(images, dx, dy):
         # plot x and y against sliced voltage data
         ax1[0].plot(x, z_x)
         ax1[1].plot(y, z_y)
-        ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)], str(image[0][4]))
-        ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)], str(image[0][4]))
+        ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)]+0.1, str(image[0][4]))
+        ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)]+0.1, str(image[0][4]))
         ax1[0].set_title('Horizontal Edge Resolution')
         ax1[1].set_title('Vertical Edge Resolution')
         ax1[0].set_xlabel('x pos [microns]')
         ax1[1].set_xlabel('y pos [microns]')
         ax1[0].set_ylabel('Z Piezo Voltage')
         ax1[1].set_ylabel('Z Piezo Voltage')
+
+        # Add sliced data to list
+        slices.append(np.array((z_x, z_y)))
+
     plt.show()
+
+    return slices
 
 
 if __name__ == '__main__':
@@ -97,7 +107,8 @@ if __name__ == '__main__':
     for tup in AFMdata:
         if (all(include in tup[0] for include in includes) and
                 all(exclude not in tup[0] for exclude in excludes)):
-            print('\n'.join(str(item) for item in tup))
-            create_image(tup[1], tup[0])
+            # print('\n'.join(str(item) for item in tup))
+            # create_image(tup[1], tup[0])
             edge_image.append(tup)
-    get_edge(edge_image, 0, 0)
+    edges = find_edge(edge_image, 0, 0)
+    # print('\n'.join(str(item) for item in edges))
