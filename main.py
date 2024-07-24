@@ -3,7 +3,8 @@ from matplotlib import pyplot as plt, colors
 from pathlib import Path
 import os
 import pandas as pd
-from skimage import feature, filters
+from skimage import filters as flt
+from skimage.morphology import disk
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 
@@ -62,6 +63,7 @@ def create_image(data, data_info):
 def find_edges(images, dx, dy):
     # Initialize list of arrays for sliced data
     slices = []
+    widths = []
 
     # Create two plots for horizontal and vertical scans
     fig1, ax1 = plt.subplots(2, 1)
@@ -78,29 +80,48 @@ def find_edges(images, dx, dy):
 
             # sliced horizontal and vertical scans in midpoints of the image
             z_x = image[1][int(np.shape(image[1])[0] / 2 + (dx * ppm)), :]
-            z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
+            # z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
             # horizontal and vertical scales from size of zoomed image
             x = np.linspace(0, width, len(z_x))
-            y = np.linspace(width, 0, len(z_y))
+            # y = np.linspace(width, 0, len(z_y))
 
             # plot x and y against sliced voltage data
             ax1[0].plot(x, z_x)
-            ax1[1].plot(y, z_y)
+            # ax1[1].plot(y, z_y)
             ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)]+0.1, str(image[0][4]))
-            ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)]+0.1, str(image[0][4]))
+            # ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)]+0.1, str(image[0][4]))
             ax1[0].set_title('Horizontal Edge Resolution')
-            ax1[1].set_title('Vertical Edge Resolution')
+            # ax1[1].set_title('Vertical Edge Resolution')
             ax1[0].set_xlabel('x pos [microns]')
-            ax1[1].set_xlabel('y pos [microns]')
+            # ax1[1].set_xlabel('y pos [microns]')
             ax1[0].set_ylabel('Z Piezo Voltage')
-            ax1[1].set_ylabel('Z Piezo Voltage')
+            # ax1[1].set_ylabel('Z Piezo Voltage')
+            [ax1[i].grid(True) for i in range(len(ax1))]
 
-            # Add sliced data to list
-            slices.append(np.array((z_x, z_y)))
+            # Add array and width data to lists
+            slices.append(z_x)
+            widths.append(width)
 
+    scans = list(zip(slices, widths))
+
+    # plt.show()
+
+    return scans
+
+
+def get_step_width(scan_data):
+    step_widths = []
+    for scan in scan_data:
+        width = scan[1]
+        array = scan[0]
+        ppm = len(array) / float(width)
+        step_width = abs(np.argmax(array[:int(len(array)/2)]) / ppm - np.argmin(array[:int(len(array)/2)]) / ppm)
+        step_widths.append(step_width)
+
+    speeds = [50, 100, 200]
+    plt.plot(speeds, step_widths)
     plt.show()
-
-    return slices
+    return step_widths
 
 
 if __name__ == '__main__':
@@ -116,3 +137,6 @@ if __name__ == '__main__':
             edge_images.append(tup)
     edges = find_edges(edge_images, 0, 0)
     # print('\n'.join(str(item) for item in edges))
+    # print(type(edges[0][0]))
+    steps = get_step_width(edges)
+    # print(steps)
