@@ -60,14 +60,15 @@ def create_image(data, data_info):
     # plt.show()
 
 
-def create_plot(x_data, y_data, titles, x_labels, y_labels):
-    fig, ax = plt.subplots(1, 2)
-    for x, y, title, x_label, y_label in zip(x_data, y_data, titles, x_labels, y_labels):
-        [ax[i].plot(np.linspace(0, x, len(y)), y) for i in range(len(ax))]
-        [ax[i].set_title(title) for i in range(len(ax))]
-        [ax[i].set_xlabel(x_label) for i in range(len(ax))]
-        [ax[i].set_ylabel(y_label) for i in range(len(ax))]
-        [ax[i].grid(True) for i in range(len(ax))]
+def create_plot(x_data, y_data, title, x_label, y_label, legend_label):
+    fig, ax = plt.subplots(1, 1)
+    for x, y, label in zip(x_data, y_data, legend_label):
+        ax.plot(np.linspace(0, x, len(y)), y, label=label)
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.grid(True)
+    plt.legend()
     plt.show()
 
 
@@ -75,9 +76,6 @@ def find_edges(images, dx, dy):
     # Initialize list of arrays for sliced data
     slices = []
     widths = []
-
-    # Create two plots for horizontal and vertical scans
-    # fig1, ax1 = plt.subplots(2, 1)
 
     # Loop through all images
     for image in images:
@@ -89,94 +87,69 @@ def find_edges(images, dx, dy):
             width = float(image[0][image[0].index("zoom") + 1][:-6])
             ppm = np.shape(image[1])[0] / width
 
-            # # sliced horizontal and vertical scans in midpoints of the image
+            # sliced horizontal and vertical scans in midpoints of the image
             z_x = image[1][int(np.shape(image[1])[0] / 2 + (dx * ppm)), :]
-            # # z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
-            # # horizontal and vertical scales from size of zoomed image
-            # x = np.linspace(0, width, len(z_x))
-            # # y = np.linspace(width, 0, len(z_y))
-            #
-            # # plot x and y against sliced voltage data
-            # ax1[0].plot(x, z_x)
-            # # ax1[1].plot(y, z_y)
-            # ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)]+0.1, str(image[0][4]))
-            # # ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)]+0.1, str(image[0][4]))
-            # ax1[0].set_title('Horizontal Edge Resolution')
-            # # ax1[1].set_title('Vertical Edge Resolution')
-            # ax1[0].set_xlabel('x pos [microns]')
-            # # ax1[1].set_xlabel('y pos [microns]')
-            # ax1[0].set_ylabel('Z Piezo Voltage')
-            # # ax1[1].set_ylabel('Z Piezo Voltage')
-            # [ax1[i].grid(True) for i in range(len(ax1))]
+            # z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
 
             # Add array and width data to lists
             slices.append(z_x)
             widths.append(width)
 
-    # scans = list(zip(slices, widths))
-
-    # plt.show()
-
     return widths, slices
 
 
-def get_step_width(scan_data):
+def get_step_width(scan_width, scan_data):
     step_widths = []
-    for scan in scan_data:
-        width = scan[1]
-        array = scan[0]
-        ppm = len(array) / float(width)
-        step_width = abs(np.argmax(array[:int(len(array)/2)]) / ppm - np.argmin(array[:int(len(array)/2)]) / ppm)
+    for width, data in zip(scan_width, scan_data):
+        ppm = len(data) / float(width)
+        step_width = abs(np.argmax(data) / ppm - np.argmin(data) / ppm)
         step_widths.append(step_width)
 
-    speeds = [50, 100, 200]
-    plt.plot(speeds, step_widths)
-    plt.show()
-    return speeds, step_widths
+    return step_widths
 
 
-def tilt_correction(scan_data):
+def tilt_correction(scan_width, scan_data):
     sub_arrays = []
-    for scan in scan_data:
-        width = scan[1]
-        array = scan[0]
-        if np.argmax(array) < np.argmin(array):
-            array = array[:np.argmax(array)]
+    for width, data in zip(scan_width, scan_data):
+        ppm = len(data) / float(width)
+        if np.argmax(data) < np.argmin(data):
+            y = data[:np.argmax(data)]
+            x = np.linspace(0, np.argmax(data) / ppm, len(y))
         else:
-            array = array[:np.argmin(array)]
-        # Fit the baseline from the orange data
-        fit = np.polyfit(np.linspace(0, width, len(array)), array, 1)
+            y = data[:np.argmin(data)]
+            x = np.linspace(0, np.argmin(data) / ppm, len(y))
+        # Fit the baseline from the original data
+        fit = np.polyfit(x, y, 1)
         linear_baseline = np.poly1d(fit)
 
         # Subtract the linear baseline from all data points
-        array = array - linear_baseline(width)
-        sub_arrays.append(array)
-    #     # Plot the results
-    #     plt.plot(width, array, label='Linear baseline removed')
-    #     # plt.legend()
-    # plt.show()
+        sub_data = data - linear_baseline(np.linspace(0, width, len(data)))
+        sub_arrays.append(sub_data)
+
     return sub_arrays
 
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     includes = ["zoom", "backward"]
-    excludes = []
+    excludes = ['3.5micron', '3.7micron', '3.9micron']
     edge_data = []
     for tup in AFMdata:
         if (all(include in tup[0] for include in includes) and
                 all(exclude not in tup[0] for exclude in excludes)):
             # print('\n'.join(str(item) for item in tup))
-            # create_image(tup[1], tup[0])
+            create_image(tup[1], tup[0])
             edge_data.append(tup)
-    # print(edge_data[0])
     edges = find_edges(edge_data, 0, 0)
-    create_plot(edges[0], edges[1], 'title', 'x position', 'voltage')
-    # print(edges[1])
-    # tilt_corrected = tilt_correction(edges)
-    # for edge in edges:
-    #     edge[0] = tilt_corrected[edges.index(edge)]
-    # tilt_corrected_edges = find_edges(edge_data, 0, 0)
     # print('\n'.join(str(item) for item in edges))
-    # steps = get_step_width(tilt_corrected_edges)
-    # print(steps)
+    speeds = []
+    for tup in edge_data:
+        speeds.append(tup[0][4])
+    create_plot(edges[0], edges[1], 'Horizontal Edge Resolution', 'x pos [microns]', 'voltage', speeds)
+    tilt_corrected = tilt_correction(edges[0], edges[1])
+    print(tilt_corrected)
+    create_plot(edges[0], tilt_corrected, 'Tilt Corrected', 'x pos [microns]', 'voltage', speeds)
+    steps = get_step_width(edges[0], edges[1])
+    new_steps = get_step_width(edges[0], tilt_corrected)
+    print(steps, new_steps)
+
