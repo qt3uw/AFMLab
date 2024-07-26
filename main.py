@@ -3,13 +3,15 @@ from matplotlib import pyplot as plt, colors
 from pathlib import Path
 import os
 import pandas as pd
+from skimage import feature, filters
 
-DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM Data')
+DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 
 
 def get_afm_data(folder_path):
-    # Initialize an empty list to store data frames
+    # Initialize an empty list to store numpy arrays
     array_list = []
+    str_list = []
 
     # Iterate over all files in the directory
     for file_name in os.listdir(folder_path):
@@ -21,43 +23,81 @@ def get_afm_data(folder_path):
                 df = pd.read_csv(f, delimiter=';', header=None)
                 array = df.to_numpy()[:, :-1].astype(float)
 
-            # Append the numpy array to the list
+            # Convert the file_name into list of identifiers
+            # check if file is duplicate
+            if str(file_name).split()[0].endswith('.csv'):
+                lists = str(file_name).split()[0][:-4].split('_')
+            else:
+                lists = str(file_name).split()[0].split('_')
+
+            # Append the numpy array and string list to the corresponding list
             array_list.append(array)
+            str_list.append(lists)
 
-    return array_list
+    # Merge both lists into list of tuples
+    tuple_list = list(zip(str_list, array_list))
+
+    return tuple_list
 
 
-def create_image(filepath):
-    # convert piezo voltage data into an array
-    # filepath = Path(r"C:\Users\QT3\Documents\EDUAFM Data\TestSample_ConstantForce_StrainGauge_100px_100pps.csv")
-    volt_data = np.loadtxt(filepath, dtype=float, delimiter=';')
-    print(volt_data)
-    print(np.size(volt_data))
-    # convert piezo voltage to height displacement
-    # *100 because .Normalize() normalizes between 0 and 1
-    # height_data = colors.Normalize()(volt_data) * 100
-    # print(height_data)
-    # create colormap of data
-    x, y = np.mgrid[0:20:0.2, 0:20:0.2]
-    v = volt_data
-    # z = height_data
-    plt.pcolormesh(x, y, v, cmap='Greys')
-    plt.title("AFM Scan")
-    plt.xlabel('x pos [microns]')
-    plt.ylabel('y pos [microns]')
-    plt.colorbar(label="Z piezo voltage [V]")
-    # plt.colorbar(label="Z piezo displacement [nm]")
+def create_image(data, data_info):
+    # Get width of scan from data_info
+    width = float(data_info[data_info.index("zoom") + 1][:-6])
+    # check if image is a zoomed image
+    if "zoom" in data_info:
+        extent = [0, width, width, 0]
+    else:
+        extent = [0, 20, 20, 0]
+
+    # Create color plot of data
+    fig, ax = plt.subplots(1, 1)
+    cax = ax.imshow(data, extent=extent)
+    fig.colorbar(cax)
+    ax.set_title('Piezo voltage image from AFM')
+    ax.set_xlabel('x pos [microns]')
+    ax.set_ylabel('y pos [microns]')
+    # plt.show()
+
+
+def get_edge(images, dx, dy):
+    # Create two plots for horizontal and vertical scans
+    fig1, ax1 = plt.subplots(2, 1)
+
+    for image in images:
+        # Get width of scan from image_info
+        width = float(image[0][image[0].index("zoom") + 1][:-6])
+        ppm = np.shape(image[1])[0] / width
+
+        # sliced horizontal and vertical scans in midpoints of the image
+        z_x = image[1][int(np.shape(image[1])[0] / 2 + (dx * ppm)), :]
+        z_y = image[1][:, int(np.shape(image[1])[0] / 2 + (dy * ppm))]
+        # horizontal and vertical scales from size of zoomed image
+        x = np.linspace(0, width, len(z_x))
+        y = np.linspace(width, 0, len(z_y))
+
+        # plot x and y against sliced voltage data
+        ax1[0].plot(x, z_x)
+        ax1[1].plot(y, z_y)
+        ax1[0].text(x[int(len(x) / 2)], z_x[int(len(z_x) / 2)], str(image[0][4]))
+        ax1[1].text(y[int(len(y) / 2)], z_y[int(len(z_y) / 2)], str(image[0][4]))
+        ax1[0].set_title('Horizontal Edge Resolution')
+        ax1[1].set_title('Vertical Edge Resolution')
+        ax1[0].set_xlabel('x pos [microns]')
+        ax1[1].set_xlabel('y pos [microns]')
+        ax1[0].set_ylabel('Z Piezo Voltage')
+        ax1[1].set_ylabel('Z Piezo Voltage')
     plt.show()
 
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
-    print(AFMdata[0])
-    # Plot numpy array
-    fig, ax = plt.subplots(1, 1)
-    cax = ax.imshow(AFMdata[0])
-    fig.colorbar(cax)
-    ax.set_title('Piezo voltage image from AFM')
-    ax.set_xlabel('x pos [microns]')
-    ax.set_ylabel('y pos [microns]')
-    plt.show()
+    includes = ["zoom", "backward"]
+    excludes = []
+    edge_image = []
+    for tup in AFMdata:
+        if (all(include in tup[0] for include in includes) and
+                all(exclude not in tup[0] for exclude in excludes)):
+            print('\n'.join(str(item) for item in tup))
+            create_image(tup[1], tup[0])
+            edge_image.append(tup)
+    get_edge(edge_image, 0, 0)
