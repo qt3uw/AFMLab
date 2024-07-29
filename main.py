@@ -60,15 +60,18 @@ def create_image(data, data_info):
     # plt.show()
 
 
-def create_plot(x_data, y_data, title, x_label, y_label, legend_label):
+def create_plot(x_data, y_data, title, x_label, y_label, legend, leg_title):
     fig, ax = plt.subplots(1, 1)
-    for x, y, label in zip(x_data, y_data, legend_label):
-        ax.plot(np.linspace(0, x, len(y)), y, label=label)
+    for x, y, label in zip(x_data, y_data, legend):
+        if isinstance(x, float):
+            ax.plot(np.linspace(0, x, len(y)), y, label=label)
+        else:
+            ax.plot(x, y, label=label)
         ax.set_title(title)
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.grid(True)
-    plt.legend()
+    plt.legend(title=leg_title)
     plt.show()
 
 
@@ -108,10 +111,24 @@ def get_step_width(scan_width, scan_data):
     return step_widths
 
 
+def get_pktopk(scan_data):
+    peaks = []
+    for data in scan_data:
+        if np.argmax(data) < np.argmin(data):
+            flat_region = data[:np.argmax(data)]
+        else:
+            flat_region = data[:np.argmin(data)]
+        peak = abs(np.max(flat_region) - np.min(flat_region))
+        peaks.append(peak)
+    return peaks
+
+
 def tilt_correction(scan_width, scan_data):
     sub_arrays = []
     for width, data in zip(scan_width, scan_data):
         ppm = len(data) / float(width)
+        # offset = 25 - np.median(data)
+        # sub_data = data + offset
         if np.argmax(data) < np.argmin(data):
             y = data[:np.argmax(data)]
             x = np.linspace(0, np.argmax(data) / ppm, len(y))
@@ -138,18 +155,22 @@ if __name__ == '__main__':
         if (all(include in tup[0] for include in includes) and
                 all(exclude not in tup[0] for exclude in excludes)):
             # print('\n'.join(str(item) for item in tup))
-            create_image(tup[1], tup[0])
+            # create_image(tup[1], tup[0])
             edge_data.append(tup)
     edges = find_edges(edge_data, 0, 0)
     # print('\n'.join(str(item) for item in edges))
     speeds = []
     for tup in edge_data:
-        speeds.append(tup[0][4])
-    create_plot(edges[0], edges[1], 'Horizontal Edge Resolution', 'x pos [microns]', 'voltage', speeds)
+        speeds.append(int(tup[0][4][5:-3]))
+    create_plot(edges[0], edges[1], 'Horizontal Edge Resolution', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
     tilt_corrected = tilt_correction(edges[0], edges[1])
-    print(tilt_corrected)
-    create_plot(edges[0], tilt_corrected, 'Tilt Corrected', 'x pos [microns]', 'voltage', speeds)
+    create_plot(edges[0], tilt_corrected, 'Tilt Corrected', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
     steps = get_step_width(edges[0], edges[1])
-    new_steps = get_step_width(edges[0], tilt_corrected)
-    print(steps, new_steps)
-
+    flat = get_pktopk(edges[1])
+    print(flat)
+    plt.scatter(speeds, steps, label='step width')
+    plt.scatter(speeds, flat, label='peak to peak')
+    plt.xlabel('Scanning Speed [pixels/micron]')
+    plt.ylabel('Step Width and Peak to Peak[microns]')
+    plt.legend()
+    plt.show()
