@@ -5,6 +5,7 @@ import os
 import pandas as pd
 from skimage import filters as flt
 from skimage.morphology import disk
+from skimage.exposure import rescale_intensity
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 
@@ -41,7 +42,7 @@ def get_afm_data(folder_path):
     return tuple_list
 
 
-def create_image(data, data_info):
+def create_image(data_info, data):
     # Get width of scan from data_info
     width = float(data_info[data_info.index("zoom") + 1][:-6])
     # check if image is a zoomed image
@@ -73,6 +74,22 @@ def create_plot(x_data, y_data, title, x_label, y_label, legend, leg_title):
         ax.grid(True)
     plt.legend(title=leg_title)
     plt.show()
+
+
+def volt_to_height(volt_data):
+    # Initialize list of arrays for converted data
+    heights = []
+
+    for item in volt_data:
+        # Check if iterating over list of tuple
+        if isinstance(item, list):
+            to_height = rescale_intensity(np.array(item), out_range=(0, 114))
+            heights.append(to_height)
+        elif isinstance(item, tuple):
+            to_height = rescale_intensity(item[1], out_range=(0, 114))
+            heights.append(to_height)
+
+    return heights
 
 
 def find_edges(images, dx, dy):
@@ -150,27 +167,30 @@ if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     includes = ["zoom", "backward"]
     excludes = ['3.5micron', '3.7micron', '3.9micron']
-    edge_data = []
-    for tup in AFMdata:
-        if (all(include in tup[0] for include in includes) and
-                all(exclude not in tup[0] for exclude in excludes)):
+    subset = []
+    for scan in AFMdata:
+        if (all(include in scan[0] for include in includes) and
+                all(exclude not in scan[0] for exclude in excludes)):
             # print('\n'.join(str(item) for item in tup))
-            # create_image(tup[1], tup[0])
-            edge_data.append(tup)
-    edges = find_edges(edge_data, 0, 0)
+            subset.append(scan)
+    # create_image(subset[0], subset[1])
+    # height_data = volt_to_height(subset)
+    edges = find_edges(subset, 0, 0)
     # print('\n'.join(str(item) for item in edges))
+    height_slice = volt_to_height(edges[1])
     speeds = []
-    for tup in edge_data:
-        speeds.append(int(tup[0][4][5:-3]))
-    create_plot(edges[0], edges[1], 'Horizontal Edge Resolution', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
-    tilt_corrected = tilt_correction(edges[0], edges[1])
-    create_plot(edges[0], tilt_corrected, 'Tilt Corrected', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
+    for sub in subset:
+        speeds.append(int(sub[0][4][5:-3]))
+    # create_plot(edges[0], height_slice, 'Horizontal Edge Resolution', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
+    tilt_corrected = tilt_correction(edges[0], height_slice)
+    # create_plot(edges[0], tilt_corrected, 'Tilt Corrected', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
     steps = get_step_width(edges[0], edges[1])
-    flat = get_pktopk(edges[1])
-    print(flat)
-    plt.scatter(speeds, steps, label='step width')
-    plt.scatter(speeds, flat, label='peak to peak')
-    plt.xlabel('Scanning Speed [pixels/micron]')
-    plt.ylabel('Step Width and Peak to Peak[microns]')
-    plt.legend()
+    flat = get_pktopk(height_slice)
+    fig, ax = plt.subplots(2, 1)
+    ax[0].scatter(speeds, steps, label='step width')
+    ax[1].scatter(speeds, flat, label='peak to peak')
+    [ax[i].set_xlabel('Scanning Speed [pixels/micron]') for i in range(len(ax))]
+    ax[0].set_ylabel('Horizontal Step Width [microns]')
+    ax[1].set_ylabel('Vertical Peak to Peak [microns]')
+    [ax[i].grid(True) for i in range(len(ax))]
     plt.show()
