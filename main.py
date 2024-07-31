@@ -41,6 +41,17 @@ def get_afm_data(folder_path):
     return tuple_list
 
 
+def filter_data(data, includes, excludes):
+    subset = []
+    for scan in data:
+        data_info = scan[0]
+        if (all(include in data_info for include in includes) and
+                all(exclude not in data_info for exclude in excludes)):
+            subset.append(scan)
+
+    return subset
+
+
 def print_data(data_list, labels):
     if isinstance(labels, list):
         for data, label in zip(data_list, labels):
@@ -51,7 +62,7 @@ def print_data(data_list, labels):
         print(neat_format)
 
 
-def create_image(data_info, data):
+def create_image(data_info, data, title, x_label, y_label):
     # Get width of scan from data_info
     width = float(data_info[data_info.index("zoom") + 1][:-6])
     # check if image is a zoomed image
@@ -64,9 +75,9 @@ def create_image(data_info, data):
     fig, ax = plt.subplots(1, 1)
     cax = ax.imshow(data, extent=extent)
     fig.colorbar(cax)
-    ax.set_title('Piezo voltage image from AFM')
-    ax.set_xlabel('x pos [microns]')
-    ax.set_ylabel('y pos [microns]')
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
     # plt.show()
 
 
@@ -127,7 +138,7 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
             ax[i].set_xlabel(x_label)
             ax[i].set_ylabel(y_label[i])
             ax[i].grid(True)
-    plt.show()
+    # plt.show()
 
 
 def volt_to_height(volt_data):
@@ -221,7 +232,7 @@ def denoise(scan_data):
 def tilt_correction(scan_width, scan_data):
     # Initialize list for tilt corrected data
     sub_arrays = []
-    sub_arrays1 = []
+
     for width, data in zip(scan_width, scan_data):
         ppm = len(data) / float(width)
         # upper and lower bounds for isolating flat region
@@ -231,52 +242,36 @@ def tilt_correction(scan_width, scan_data):
         if np.argmax(data) < np.argmin(data):
             linear_region = np.where(data > upper)[0][-1]-10
             y = data[:linear_region]
-            y1 = data[:np.argmax(data)]
             x = np.linspace(0, linear_region / ppm, len(y))
-            x1 = np.linspace(0, np.argmax(data) / ppm, len(y1))
         else:
             linear_region = np.where(data < lower)[0][-1]-10
             y = data[:linear_region]
-            y1 = data[:np.argmin(data)]
             x = np.linspace(0, linear_region / ppm, len(y))
-            x1 = np.linspace(0, np.argmin(data) / ppm, len(y1))
         # Fit the baseline from the original data
         fit = np.polyfit(x, y, 1)
-        fit1 = np.polyfit(x1, y1, 1)
         linear_baseline = np.poly1d(fit)
-        linear_baseline1 = np.poly1d(fit1)
 
         # Subtract the linear baseline from all data points and rescale
         sub_data = data - linear_baseline(np.linspace(0, width, len(data)))
-        sub_data1 = data - linear_baseline1(np.linspace(0, width, len(data)))
         scaled = rescale_intensity(sub_data, out_range=(0, 114))
-        scaled1 = rescale_intensity(sub_data1, out_range=(0, 114))
         sub_arrays.append(scaled)
-        sub_arrays1.append(scaled1)
 
-    return sub_arrays, sub_arrays1
+    return sub_arrays
 
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
-    includes = ['zoom', 'backward']
-    excludes = ['3.5micron', '3.7micron', '3.9micron']
-    subset = []
-    for scan in AFMdata:
-        if (all(include in scan[0] for include in includes) and
-                all(exclude not in scan[0] for exclude in excludes)):
-            # print('\n'.join(str(item) for item in tup))
-            subset.append(scan)
-    # create_image(subset[0], subset[1])
-    # print_data(subset, None)
-    height_data = volt_to_height(subset)
-    edges = find_edges(subset)
+    filtered = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron', 'ConstantHeight', 'Lateral'])
+    print_data(filtered, None)
+    height_data = volt_to_height(filtered)
+    create_image(filtered[0][0], height_data[0], 'Height Data from AFM Scan [nm]', 'x pos [micron]', 'y pos [micron]')
+    edges = find_edges(filtered)
     scan_widths = edges[0]
     # print_data(edges, ['Scan Widths:', 'Scan Data:'])
     height_slice = volt_to_height(edges[1])
 
     speeds = []
-    for sub in subset:
+    for sub in filtered:
         speeds.append(int(sub[0][4][5:-3]))
     create_plot(1,
                 'line',
@@ -288,17 +283,17 @@ if __name__ == '__main__':
                 speeds,
                 'scanning speed [pps]')
     tilt_corrected = tilt_correction(scan_widths, height_slice)
-    denoised = denoise(tilt_corrected[0])
+    denoised = denoise(tilt_corrected)
     create_plot(2,
                 'line',
                 scan_widths,
-                [tilt_corrected[0], denoised],
+                [tilt_corrected, denoised],
                 'Tilt Corrected and Denoised',
                 'x pos [microns]',
                 ['height [nm]', 'height [nm]'],
                 speeds,
                 'scanning speed [pps]')
-    flat = get_noise(tilt_corrected[0])
+    flat = get_noise(tilt_corrected)
     # print_data(flat, ['Pk to Pk:', 'RMS'])
     create_plot(2,
                 'scatter',
@@ -320,3 +315,4 @@ if __name__ == '__main__':
                 'Step Width [microns]',
                 None,
                 None)
+    plt.show()
