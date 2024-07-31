@@ -261,18 +261,20 @@ def tilt_correction(scan_width, scan_data):
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
-    filtered = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron', 'ConstantHeight', 'Lateral'])
-    print_data(filtered, None)
-    height_data = volt_to_height(filtered)
-    create_image(filtered[0][0], height_data[0], 'Height Data from AFM Scan [nm]', 'x pos [micron]', 'y pos [micron]')
-    edges = find_edges(filtered)
+    constant_force = filter_data(AFMdata, ['zoom', 'backward', 'ConstantForce'], ['3.5micron', '3.7micron', '3.9micron'])
+    constant_height = filter_data(AFMdata, ['zoom', 'backward', 'ConstantHeight'], [])
+    height_data = volt_to_height(constant_force)
+    create_image(constant_force[0][0], height_data[0], 'Height Image [nm]', 'x pos [micron]', 'y pos [micron]')
+    edges = find_edges(constant_force)
     scan_widths = edges[0]
-    # print_data(edges, ['Scan Widths:', 'Scan Data:'])
     height_slice = volt_to_height(edges[1])
-
+    tilt_corrected = tilt_correction(scan_widths, height_slice)
+    denoised = denoise(tilt_corrected)
+    flat = get_noise(tilt_corrected)
+    steps = get_step_width(scan_widths, denoised)
     speeds = []
-    for sub in filtered:
-        speeds.append(int(sub[0][4][5:-3]))
+    for speed in constant_force:
+        speeds.append(int(speed[0][4][5:-3]))
     create_plot(1,
                 'line',
                 scan_widths,
@@ -282,8 +284,6 @@ if __name__ == '__main__':
                 'height [nm]',
                 speeds,
                 'scanning speed [pps]')
-    tilt_corrected = tilt_correction(scan_widths, height_slice)
-    denoised = denoise(tilt_corrected)
     create_plot(2,
                 'line',
                 scan_widths,
@@ -293,8 +293,6 @@ if __name__ == '__main__':
                 ['height [nm]', 'height [nm]'],
                 speeds,
                 'scanning speed [pps]')
-    flat = get_noise(tilt_corrected)
-    # print_data(flat, ['Pk to Pk:', 'RMS'])
     create_plot(2,
                 'scatter',
                 speeds,
@@ -304,8 +302,6 @@ if __name__ == '__main__':
                 ['Pk to Pk [nm]', 'RMS [nm]'],
                 None,
                 None)
-    steps = get_step_width(scan_widths, denoised)
-    # print('\n'.join(str(item) for item in steps))
     create_plot(1,
                 'scatter',
                 speeds,
