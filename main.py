@@ -61,18 +61,44 @@ def create_image(data_info, data):
     # plt.show()
 
 
-def create_plot(x_data, y_data, title, x_label, y_label, legend, leg_title):
-    fig, ax = plt.subplots(1, 1)
-    for x, y, label in zip(x_data, y_data, legend):
-        if isinstance(x, float):
-            ax.plot(np.linspace(0, x, len(y)), y, label=label)
+def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, leg_label, leg_title):
+    fig, ax = plt.subplots(num_plots, 1)
+    # Create multiple plots or overlay data onto one plot
+    if num_plots == 1:
+        # plot multiple data sets or one data set
+        if isinstance(leg_label, list):
+            for x, y, label in zip(x_data, y_data, leg_label):
+                # create array for x_data if value is floating point
+                if isinstance(x, float):
+                    if plot_type == 'scatter':
+                        ax.scatter(np.linspace(0, x, len(y)), y, label=label)
+                    elif plot_type == 'line':
+                        ax.plot(np.linspace(0, x, len(y)), y, label=label)
+                else:
+                    if plot_type == 'scatter':
+                        ax.scatter(x, y, label=label)
+                    elif plot_type == 'line':
+                        ax.plot(x, y, label=label)
+                plt.legend(title=leg_title)
         else:
-            ax.plot(x, y, label=label)
+            if plot_type == 'scatter':
+                ax.scatter(x_data, y_data)
+            elif plot_type == 'line':
+                ax.plot(x_data, y_data)
         ax.set_title(title)
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.grid(True)
-    plt.legend(title=leg_title)
+    else:
+        for i in range(num_plots):
+            if plot_type == 'scatter':
+                ax[i].scatter(x_data, y_data[i])
+            elif plot_type == 'line':
+                ax[i].plot(x_data, y_data[i])
+            fig.suptitle(title)
+            ax[i].set_xlabel(x_label)
+            ax[i].set_ylabel(y_label[i])
+            ax[i].grid(True)
     plt.show()
 
 
@@ -81,13 +107,12 @@ def volt_to_height(volt_data):
     heights = []
 
     for item in volt_data:
-        # Check if iterating over list of tuple
-        if isinstance(item, list):
-            to_height = rescale_intensity(np.array(item), out_range=(0, 114))
-            heights.append(to_height)
-        elif isinstance(item, tuple):
+        # Check if iterating over tuples
+        if isinstance(item, tuple):
             to_height = rescale_intensity(item[1], out_range=(0, 114))
-            heights.append(to_height)
+        else:
+            to_height = rescale_intensity(item, out_range=(0, 114))
+        heights.append(to_height)
 
     return heights
 
@@ -119,34 +144,48 @@ def find_edges(images, dx, dy):
 
 
 def get_step_width(scan_width, scan_data):
+    # Initialize list for step width data
     step_widths = []
+    # Loop through data
     for width, data in zip(scan_width, scan_data):
         ppm = len(data) / float(width)
-        step_width = abs(np.argmax(data) / ppm - np.argmin(data) / ppm)
+        # upper and lower bounds for isolating the step region
+        upper = 0.8 * np.max(data)
+        lower = 0.2 * np.max(data)
+        indices = np.where(np.logical_and(data < upper, data > lower))[0]
+        step_width = abs(indices[-1] - indices[0]) / ppm
         step_widths.append(step_width)
 
     return step_widths
 
 
-def get_pktopk(scan_data):
+def get_noise(scan_data):
+    # Initialize lists for peak to peak and rms data
     peaks = []
+    rms = []
     for data in scan_data:
+        # upper and lower bounds for isolating flat region
+        upper = 0.9 * np.max(data)
+        lower = 0.1 * np.max(data)
+        # Check if step is falling or rising
         if np.argmax(data) < np.argmin(data):
-            flat_region = data[:np.argmax(data)]
+            flat_region = data[:np.where(data > upper)[0][-1]-10]
         else:
-            flat_region = data[:np.argmin(data)]
-        peak = abs(np.max(flat_region) - np.min(flat_region))
-        peaks.append(peak)
-    return peaks
+            flat_region = data[:np.where(data < lower)[0][-1]-10]
+
+        peaks.append(np.ptp(flat_region))
+        rms.append(np.std(flat_region))
+
+    return peaks, rms
 
 
 def tilt_correction(scan_width, scan_data):
     sub_arrays = []
     for width, data in zip(scan_width, scan_data):
         ppm = len(data) / float(width)
-        # offset = 25 - np.median(data)
-        # sub_data = data + offset
+        # Check if step is falling or rising
         if np.argmax(data) < np.argmin(data):
+            # y = np.concatenate((data[:np.argmax(data)], data[np.argmin(data):len(data)-1]))
             y = data[:np.argmax(data)]
             x = np.linspace(0, np.argmax(data) / ppm, len(y))
         else:
@@ -158,7 +197,8 @@ def tilt_correction(scan_width, scan_data):
 
         # Subtract the linear baseline from all data points
         sub_data = data - linear_baseline(np.linspace(0, width, len(data)))
-        sub_arrays.append(sub_data)
+        scaled = rescale_intensity(sub_data, out_range=(0, 114))
+        sub_arrays.append(scaled)
 
     return sub_arrays
 
@@ -174,23 +214,54 @@ if __name__ == '__main__':
             # print('\n'.join(str(item) for item in tup))
             subset.append(scan)
     # create_image(subset[0], subset[1])
-    # height_data = volt_to_height(subset)
+    height_data = volt_to_height(subset)
     edges = find_edges(subset, 0, 0)
+    scan_widths = edges[0]
     # print('\n'.join(str(item) for item in edges))
     height_slice = volt_to_height(edges[1])
+    # print('\n'.join(str(item) for item in height_slice))
     speeds = []
     for sub in subset:
         speeds.append(int(sub[0][4][5:-3]))
-    # create_plot(edges[0], height_slice, 'Horizontal Edge Resolution', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
-    tilt_corrected = tilt_correction(edges[0], height_slice)
-    # create_plot(edges[0], tilt_corrected, 'Tilt Corrected', 'x pos [microns]', 'voltage', speeds, 'scanning speed [ppm]')
-    steps = get_step_width(edges[0], edges[1])
-    flat = get_pktopk(height_slice)
-    fig, ax = plt.subplots(2, 1)
-    ax[0].scatter(speeds, steps, label='step width')
-    ax[1].scatter(speeds, flat, label='peak to peak')
-    [ax[i].set_xlabel('Scanning Speed [pixels/micron]') for i in range(len(ax))]
-    ax[0].set_ylabel('Horizontal Step Width [microns]')
-    ax[1].set_ylabel('Vertical Peak to Peak [microns]')
-    [ax[i].grid(True) for i in range(len(ax))]
-    plt.show()
+    create_plot(1,
+                'line',
+                scan_widths,
+                height_slice,
+                'Horizontal Edge Resolution',
+                'x pos [microns]',
+                'height [nm]',
+                speeds,
+                'scanning speed [pps]')
+    tilt_corrected = tilt_correction(scan_widths, height_slice)
+    create_plot(1,
+                'line',
+                scan_widths,
+                tilt_corrected,
+                'Tilt Corrected',
+                'x pos [microns]',
+                'height [nm]',
+                speeds,
+                'scanning speed [pps]')
+    flat = get_noise(tilt_corrected)
+    # print('\n'.join(str(item) for item in flat))
+    print(flat)
+    create_plot(2,
+                'scatter',
+                speeds,
+                flat,
+                'Pk to Pk vs RMS',
+                'Scanning Speed [pixels/s]',
+                ['Pk to Pk [nm]', 'RMS [nm]'],
+                None,
+                None)
+    steps = get_step_width(scan_widths, tilt_corrected)
+    print('\n'.join(str(item) for item in steps))
+    create_plot(1,
+                'scatter',
+                speeds,
+                steps,
+                'Step Width',
+                'Scanning Speed [pixels/s]',
+                'Step Width [microns]',
+                None,
+                None)
