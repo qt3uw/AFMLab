@@ -7,8 +7,7 @@ from skimage.exposure import rescale_intensity
 from scipy.signal import savgol_filter
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
-PARAM_DICT_KEYS = ['Name', 'Resolution', 'Scan Speed', 'Scanning Mode',
-                   'is_StrainGauge', 'is_zoom', 'Zoom Width', 'PID Values', 'is_Lateral', 'Scan Direction']
+PARAM_HEADERS = ['Name', 'Resolution', 'Scan Speed', 'Scanning Mode', 'StrainGauge', 'is_Zoom', 'Zoom Width', 'Scan Direction']
 
 
 def get_afm_data(folder_path):
@@ -29,13 +28,17 @@ def get_afm_data(folder_path):
             # Convert the file_name into list of identifiers
             # check if file is duplicate
             if str(file_name).split()[0].endswith('.csv'):
-                lists = str(file_name).split()[0][:-4].split('_')
+                file_info = str(file_name).split()[0][:-4].split('_')
             else:
-                lists = str(file_name).split()[0].split('_')
+                file_info = str(file_name).split()[0].split('_')
+            # # check if optional parameters are in file info
+            # for i, delta in zip(range(4, 9), PARAM_HEADERS[4:]):
+            #     if delta not in file_info:
+            #         file_info.insert(i, 'Default/None')
 
             # Append the numpy array and string list to the corresponding list
             array_list.append(array)
-            str_list.append(lists)
+            str_list.append(file_info)
 
     # Merge both lists into list of tuples
     tuple_list = list(zip(str_list, array_list))
@@ -54,45 +57,21 @@ def filter_data(data, includes, excludes):
     return subset
 
 
-def get_parameter(data, param):
-    param_dict = {}
-    dict_list = []
-    get_param_list = []
+def get_parameter(data, param, begin_slice, end_slice):
+    info_list = []
+    get_param = []
     for scan in data:
         data_info = scan[0]
-        for key, i in zip(PARAM_DICT_KEYS, range(len(data_info))):
-            while i < 4:
-                param_dict[key] = data_info[i]
-            if data_info[i] == 'StrainGauge':
-                param_dict[key] = 'On'
-            else:
-                param_dict[key] = 'Off'
-            if data_info[i] == 'zoom':
-                param_dict[key] = True
-            else:
-                param_dict[key] = False
-            if data_info[i].contains('micron'):
-                param_dict[key] = data_info[i]
-            else:
-                param_dict[key] = None
-            if data_info[i].contains('PID'):
-                param_dict[key] = data_info[i][3:]
-            else:
-                param_dict[key] = 'Default'
-            if data_info[i] == 'Lateral':
-                param_dict[key] = True
-            else:
-                param_dict[key] = False
-            if data_info[i] == 'backward':
-                param_dict[key] = data_info[i]
-            else:
-                param_dict[key] = 'forward'
+        info_list.append(data_info)
 
-        dict_list.append(param_dict)
-        get_param = param_dict.get(param, None)
-        get_param_list.append(get_param)
+    df = pd.DataFrame(info_list, columns=PARAM_HEADERS)
 
-    return dict_list, get_param_list
+    get_col = df[param].tolist()
+    for item in get_col:
+        part = item[begin_slice:end_slice]
+        get_param.append(part)
+
+    return df, get_param
 
 
 def print_data(data_list, labels):
@@ -316,11 +295,11 @@ if __name__ == '__main__':
     denoised = denoise(tilt_corrected)
     flat = get_noise(tilt_corrected)
     steps = get_step_width(scan_widths, denoised)
-    # speeds = []
-    # for speed in constant_force:
-    #     speeds.append(int(speed[0][4][5:-3]))
-    speeds = get_parameter(constant_force, 'Scan Speed')[1]
-    print_data(speeds, 'Scan Speed: ')
+    speeds = []
+    for speed in constant_force:
+        speeds.append(int(speed[0][2][5:-3]))
+    # speeds = get_parameter(constant_force, 'Scan Speed', 5, -3)
+    # print_data(speeds, 'Scan Speed: ')
     create_plot(1,
                 'line',
                 scan_widths,
