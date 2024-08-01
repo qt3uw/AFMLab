@@ -7,7 +7,7 @@ from skimage.exposure import rescale_intensity
 from scipy.signal import savgol_filter
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
-PARAM_DICT_KEYS = ['Name', 'Resolution', 'Scanning Speed', 'Scanning Mode',
+PARAM_DICT_KEYS = ['Name', 'Resolution', 'Scan Speed', 'Scanning Mode',
                    'is_StrainGauge', 'is_zoom', 'Zoom Width', 'PID Values', 'is_Lateral', 'Scan Direction']
 
 
@@ -56,6 +56,8 @@ def filter_data(data, includes, excludes):
 
 def get_parameter(data, param):
     param_dict = {}
+    dict_list = []
+    get_param_list = []
     for scan in data:
         data_info = scan[0]
         for key, i in zip(PARAM_DICT_KEYS, range(len(data_info))):
@@ -86,9 +88,11 @@ def get_parameter(data, param):
             else:
                 param_dict[key] = 'forward'
 
-    get_param = param_dict.get(param, None)
+        dict_list.append(param_dict)
+        get_param = param_dict.get(param, None)
+        get_param_list.append(get_param)
 
-    return param_dict, get_param
+    return dict_list, get_param_list
 
 
 def print_data(data_list, labels):
@@ -312,10 +316,11 @@ if __name__ == '__main__':
     denoised = denoise(tilt_corrected)
     flat = get_noise(tilt_corrected)
     steps = get_step_width(scan_widths, denoised)
-    speeds = []
-    for speed in constant_force:
-        speeds.append(int(speed[0][4][5:-3]))
-    speeds = get_parameter(constant_force, 'Scanning Speed')
+    # speeds = []
+    # for speed in constant_force:
+    #     speeds.append(int(speed[0][4][5:-3]))
+    speeds = get_parameter(constant_force, 'Scan Speed')[1]
+    print_data(speeds, 'Scan Speed: ')
     create_plot(1,
                 'line',
                 scan_widths,
