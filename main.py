@@ -7,6 +7,8 @@ from skimage.exposure import rescale_intensity
 from scipy.signal import savgol_filter
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
+PARAM_DICT_KEYS = ['Name', 'Resolution', 'Scanning Speed', 'Scanning Mode',
+                   'is_StrainGauge', 'is_zoom', 'Zoom Width', 'PID Values', 'is_Lateral', 'Scan Direction']
 
 
 def get_afm_data(folder_path):
@@ -50,6 +52,43 @@ def filter_data(data, includes, excludes):
             subset.append(scan)
 
     return subset
+
+
+def get_parameter(data, param):
+    param_dict = {}
+    for scan in data:
+        data_info = scan[0]
+        for key, i in zip(PARAM_DICT_KEYS, range(len(data_info))):
+            while i < 4:
+                param_dict[key] = data_info[i]
+            if data_info[i] == 'StrainGauge':
+                param_dict[key] = 'On'
+            else:
+                param_dict[key] = 'Off'
+            if data_info[i] == 'zoom':
+                param_dict[key] = True
+            else:
+                param_dict[key] = False
+            if data_info[i].contains('micron'):
+                param_dict[key] = data_info[i]
+            else:
+                param_dict[key] = None
+            if data_info[i].contains('PID'):
+                param_dict[key] = data_info[i][3:]
+            else:
+                param_dict[key] = 'Default'
+            if data_info[i] == 'Lateral':
+                param_dict[key] = True
+            else:
+                param_dict[key] = False
+            if data_info[i] == 'backward':
+                param_dict[key] = data_info[i]
+            else:
+                param_dict[key] = 'forward'
+
+    get_param = param_dict.get(param, None)
+
+    return param_dict, get_param
 
 
 def print_data(data_list, labels):
@@ -261,8 +300,9 @@ def tilt_correction(scan_width, scan_data):
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
-    constant_force = filter_data(AFMdata, ['zoom', 'backward', 'ConstantForce'], ['3.5micron', '3.7micron', '3.9micron'])
-    constant_height = filter_data(AFMdata, ['zoom', 'backward', 'ConstantHeight'], [])
+    zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
+    constant_force = filter_data(zoom_images, ['ConstantForce'], [])
+    constant_height = filter_data(zoom_images, ['ConstantHeight'], ['Lateral'])
     height_data = volt_to_height(constant_force)
     create_image(constant_force[0][0], height_data[0], 'Height Image [nm]', 'x pos [micron]', 'y pos [micron]')
     edges = find_edges(constant_force)
@@ -275,6 +315,7 @@ if __name__ == '__main__':
     speeds = []
     for speed in constant_force:
         speeds.append(int(speed[0][4][5:-3]))
+    speeds = get_parameter(constant_force, 'Scanning Speed')
     create_plot(1,
                 'line',
                 scan_widths,
