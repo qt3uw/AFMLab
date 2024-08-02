@@ -7,7 +7,8 @@ from skimage.exposure import rescale_intensity
 from scipy.signal import savgol_filter
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
-PARAM_HEADERS = ['Name', 'Resolution', 'Scan Speed', 'Scanning Mode', 'StrainGauge', 'is_Zoom', 'Zoom Width', 'Scan Direction']
+PARAM_HEADERS = ['Name', 'Resolution', 'Speed', 'Mode', 'StrainGauge', 'is_Zoom', 'Width',
+                 'PID', 'P', 'I', 'D', 'is_Lateral', 'Direction']
 
 
 def get_afm_data(folder_path):
@@ -46,7 +47,7 @@ def get_afm_data(folder_path):
     return tuple_list
 
 
-def filter_data(data, includes, excludes):
+def filter_data(data, includes=None, excludes=None):
     subset = []
     for scan in data:
         data_info = scan[0]
@@ -57,31 +58,62 @@ def filter_data(data, includes, excludes):
     return subset
 
 
-def get_parameter(data, param, begin_slice, end_slice):
+def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=None):
+    # Initialize lists for dataframe and parameter of interest
     info_list = []
     get_param = []
+
     for scan in data:
-        data_info = scan[0]
+        # Initialize list to hold scan info
+        data_info = []
+        data_info.extend(scan[0])
+        # add default values if list has missing parameters to match PARAM_HEADERS
+        if 'backward' not in data_info:
+            data_info.append('forward')
+        if 'Lateral' not in data_info:
+            data_info.insert(-1, None)
+        if 'PID' not in data_info:
+            data_info.insert(-2, 'Default')
+            data_info.insert(-2, '0.1')
+            data_info.insert(-2, '0.1')
+            data_info.insert(-2, '0.1')
+        if 'zoom' not in data_info:
+            data_info.insert(-6, None)
+            data_info.insert(-6, None)
+        if 'StrainGauge' not in data_info:
+            data_info.insert(-8, 'Off')
         info_list.append(data_info)
 
-    df = pd.DataFrame(info_list, columns=PARAM_HEADERS)
+    # Convert list into dataframe
+    all_param = pd.DataFrame(info_list, columns=PARAM_HEADERS)
 
-    get_col = df[param].tolist()
-    for item in get_col:
-        part = item[begin_slice:end_slice]
-        get_param.append(part)
+    # check if fetching parameter or just returning the dataframe
+    if not isinstance(param, str):
 
-    return df, get_param
+        return all_param
 
-
-def print_data(data_list, labels):
-    if isinstance(labels, list):
-        for data, label in zip(data_list, labels):
-            neat_format = '{}'.format(label) + '\n' + '\n'.join(str(item) for item in data)
-            print(neat_format)
     else:
-        neat_format = '\n'.join(str(item) for item in data_list)
+        # fetch one parameter from dataframe
+        get_col = all_param[param].tolist()
+        # check what type of parameter and if slicing is necessary
+        for item in get_col:
+            if as_type == 'int':
+                part = int(item[begin_slice:end_slice])
+            elif as_type == 'float':
+                part = float(item[begin_slice:end_slice])
+            else:
+                part = item[begin_slice:end_slice]
+            get_param.append(part)
+
+    return get_param
+
+
+def print_data(data):
+    if any(isinstance(element, (tuple, list)) for element in data):
+        neat_format = '\n'.join(str(item) for item in data)
         print(neat_format)
+    else:
+        print(data)
 
 
 def create_image(data_info, data, title, x_label, y_label):
@@ -103,7 +135,7 @@ def create_image(data_info, data, title, x_label, y_label):
     # plt.show()
 
 
-def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, leg_label, leg_title):
+def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, leg_label=None, leg_title=None):
     fig, ax = plt.subplots(num_plots, 1)
     # One plot case
     if num_plots == 1:
@@ -284,7 +316,7 @@ def tilt_correction(scan_width, scan_data):
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
-    constant_force = filter_data(zoom_images, ['ConstantForce'], [])
+    constant_force = filter_data(zoom_images, ['ConstantForce'])
     constant_height = filter_data(zoom_images, ['ConstantHeight'], ['Lateral'])
     height_data = volt_to_height(constant_force)
     create_image(constant_force[0][0], height_data[0], 'Height Image [nm]', 'x pos [micron]', 'y pos [micron]')
@@ -295,11 +327,8 @@ if __name__ == '__main__':
     denoised = denoise(tilt_corrected)
     flat = get_noise(tilt_corrected)
     steps = get_step_width(scan_widths, denoised)
-    speeds = []
-    for speed in constant_force:
-        speeds.append(int(speed[0][2][5:-3]))
-    # speeds = get_parameter(constant_force, 'Scan Speed', 5, -3)
-    # print_data(speeds, 'Scan Speed: ')
+    constant_force_info = get_parameter(constant_force)
+    speeds = get_parameter(constant_force, 'Speed', 'int', 5, -3)
     create_plot(1,
                 'line',
                 scan_widths,
@@ -324,16 +353,12 @@ if __name__ == '__main__':
                 flat,
                 'Pk to Pk vs RMS',
                 'Scanning Speed [pixels/s]',
-                ['Pk to Pk [nm]', 'RMS [nm]'],
-                None,
-                None)
+                ['Pk to Pk [nm]', 'RMS [nm]'])
     create_plot(1,
                 'scatter',
                 speeds,
                 steps,
                 'Step Width',
                 'Scanning Speed [pixels/s]',
-                'Step Width [microns]',
-                None,
-                None)
-    plt.show()
+                'Step Width [microns]')
+    # plt.show()
