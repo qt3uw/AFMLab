@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.polynomial import Polynomial
 from matplotlib import pyplot as plt
 from pathlib import Path
 import os
@@ -9,6 +10,7 @@ from scipy.signal import savgol_filter
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 PARAM_HEADERS = ['Name', 'Resolution', 'Speed', 'Mode', 'StrainGauge', 'is_Zoom', 'Width',
                  'PID', 'P', 'I', 'D', 'is_Lateral', 'Direction']
+VOLTS_PER_NM = 25 / 114
 
 
 def get_afm_data(folder_path):
@@ -121,7 +123,7 @@ def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=No
 
 
 def print_data(data):
-    if any(isinstance(element, (tuple, list)) for element in data):
+    if any(isinstance(element, (tuple, list, np.ndarray)) for element in data):
         neat_format = '\n'.join(str(item) for item in data)
         print(neat_format)
     else:
@@ -211,12 +213,12 @@ def volt_to_height(volt_data):
     # Initialize list of arrays for converted data
     heights = []
 
-    for item in volt_data:
+    for scan in volt_data:
         # Check if iterating over tuples
-        if isinstance(item, tuple):
-            to_height = rescale_intensity(item[1], out_range=(0, 114))
+        if isinstance(scan, tuple):
+            to_height = rescale_intensity(scan[1], out_range=(0, scan[1].max() / VOLTS_PER_NM))
         else:
-            to_height = rescale_intensity(item, out_range=(0, 114))
+            to_height = rescale_intensity(scan, out_range=(0, scan.max() / VOLTS_PER_NM))
         heights.append(to_height)
 
     return heights
@@ -315,11 +317,14 @@ def tilt_correction(scan_width, scan_data):
             x = np.linspace(0, linear_region / ppm, len(y))
         # Fit the baseline from the original data
         fit = np.polyfit(x, y, 1)
+        # coefs = Polynomial.fit(x, y, 1).convert().coef
         linear_baseline = np.poly1d(fit)
+        # p = Polynomial(coefs)
 
         # Subtract the linear baseline from all data points and rescale
         sub_data = data - linear_baseline(np.linspace(0, width, len(data)))
-        scaled = rescale_intensity(sub_data, out_range=(0, 114))
+        # sub_data = data - p(np.linspace(0, width, len(data)))
+        scaled = rescale_intensity(sub_data, out_range=(data.min(), data.max()))
         sub_arrays.append(scaled)
 
     return sub_arrays
@@ -335,25 +340,28 @@ if __name__ == '__main__':
     scan_widths = edges[0]
     volt_slice = edges[1]
     height_slice = volt_to_height(volt_slice)
-    tilt_corrected = tilt_correction(scan_widths, height_slice)
-    denoised = denoise(tilt_corrected)
-    flat = get_noise(tilt_corrected)
-    steps = get_step_width(scan_widths, denoised)
+    tilt_corrected_volt = tilt_correction(scan_widths, volt_slice)
+    tilt_corrected_height = tilt_correction(scan_widths, height_slice)
+    denoised_volt = denoise(tilt_corrected_volt)
+    denoised_height = denoise(tilt_corrected_height)
+    flat = get_noise(tilt_corrected_height)
+    steps = get_step_width(scan_widths, denoised_height)
     speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
-    create_plot(1,
+    print_data(height_slice)
+    create_plot(2,
                 'line',
                 scan_widths,
-                height_slice,
+                [height_slice, volt_slice],
                 'Horizontal Edge Resolution',
                 'x pos [microns]',
-                'height [nm]',
+                ['height [nm]', 'z piezo voltage'],
                 speeds,
                 'scanning speed [pps]')
     create_plot(2,
                 'line',
                 scan_widths,
-                [tilt_corrected, denoised],
-                'Tilt Corrected and Denoised',
+                [tilt_corrected_height, denoised_height],
+                'Tilt Corrected and Denoised Height',
                 'x pos [microns]',
                 ['height [nm]', 'height [nm]'],
                 speeds,
@@ -372,4 +380,4 @@ if __name__ == '__main__':
                 'Step Width',
                 'Scanning Speed [pixels/s]',
                 'Step Width [microns]')
-    # plt.show()
+    plt.show()
