@@ -48,12 +48,21 @@ def get_afm_data(folder_path):
 
 
 def filter_data(data, includes=None, excludes=None):
+    # Initialize list for filtered data
     subset = []
     for scan in data:
         data_info = scan[0]
-        if (all(include in data_info for include in includes) and
-                all(exclude not in data_info for exclude in excludes)):
-            subset.append(scan)
+        # check which parameters to include and exclude from subset
+        if not isinstance(includes, list):
+            if all(exclude not in data_info for exclude in excludes):
+                subset.append(scan)
+        elif not (isinstance(excludes, list)):
+            if all(include in data_info for include in includes):
+                subset.append(scan)
+        else:
+            if (all(include in data_info for include in includes) and
+                    all(exclude not in data_info for exclude in excludes)):
+                subset.append(scan)
 
     return subset
 
@@ -67,6 +76,9 @@ def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=No
         # Initialize list to hold scan info
         data_info = []
         data_info.extend(scan[0])
+        # make resolution and speed parameters more readable
+        data_info[1] = data_info[1][3:]
+        data_info[2] = data_info[2][5:]
         # add default values if list has missing parameters to match PARAM_HEADERS
         if 'backward' not in data_info:
             data_info.append('forward')
@@ -90,7 +102,7 @@ def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=No
     # check if fetching parameter or just returning the dataframe
     if not isinstance(param, str):
 
-        return all_param
+        return all_param.to_string()
 
     else:
         # fetch one parameter from dataframe
@@ -105,7 +117,7 @@ def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=No
                 part = item[begin_slice:end_slice]
             get_param.append(part)
 
-    return get_param
+        return get_param
 
 
 def print_data(data):
@@ -317,18 +329,17 @@ if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
     constant_force = filter_data(zoom_images, ['ConstantForce'])
-    constant_height = filter_data(zoom_images, ['ConstantHeight'], ['Lateral'])
+    constant_height = filter_data(zoom_images, ['ConstantHeight'])
     height_data = volt_to_height(constant_force)
-    create_image(constant_force[0][0], height_data[0], 'Height Image [nm]', 'x pos [micron]', 'y pos [micron]')
     edges = find_edges(constant_force)
     scan_widths = edges[0]
-    height_slice = volt_to_height(edges[1])
+    volt_slice = edges[1]
+    height_slice = volt_to_height(volt_slice)
     tilt_corrected = tilt_correction(scan_widths, height_slice)
     denoised = denoise(tilt_corrected)
     flat = get_noise(tilt_corrected)
     steps = get_step_width(scan_widths, denoised)
-    constant_force_info = get_parameter(constant_force)
-    speeds = get_parameter(constant_force, 'Speed', 'int', 5, -3)
+    speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
     create_plot(1,
                 'line',
                 scan_widths,
