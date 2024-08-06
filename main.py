@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.polynomial import Polynomial
 from matplotlib import pyplot as plt
 from pathlib import Path
 import os
@@ -10,9 +9,11 @@ from scipy.signal import savgol_filter
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 PARAM_HEADERS = ['Name', 'Resolution', 'Speed', 'Mode', 'StrainGauge', 'is_Zoom', 'Width',
                  'PID', 'P', 'I', 'D', 'is_Lateral', 'Direction']
-VOLTS_PER_NM = 25 / 114
+VOLTS_PER_NM = 0.6414615384615386 / 114
 
 
+# Arguments: folder_path: PATH directory
+# Returns: tuple list. The first element is a list of strings and second is an array
 def get_afm_data(folder_path):
     # Initialize an empty list to store numpy arrays
     array_list = []
@@ -49,6 +50,8 @@ def get_afm_data(folder_path):
     return tuple_list
 
 
+# Arguments: data: tuple list, includes: str list, excludes: str list
+# Returns: tuple list
 def filter_data(data, includes=None, excludes=None):
     # Initialize list for filtered data
     subset = []
@@ -69,6 +72,9 @@ def filter_data(data, includes=None, excludes=None):
     return subset
 
 
+# Arguments: data: tuple list, param: str, as_type: str, begin_slice: int, end_slice: int
+# Returns: pandas dataframe, str list
+# Notes: param can be any element of PARAM_HEADERS, as_type can be 'float' or 'int' (otherwise assume str)
 def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=None):
     # Initialize lists for dataframe and parameter of interest
     info_list = []
@@ -122,6 +128,140 @@ def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=No
         return get_param
 
 
+# Arguments: volt_data: list or arr list
+# Returns: same type
+def volt_to_height(volt_data):
+    # Initialize list of arrays for converted data
+    heights = []
+
+    for scan in volt_data:
+        # Check if iterating over tuples
+        if isinstance(scan, tuple):
+            set_zero = scan[1] - np.min(scan[1])
+            to_height = np.divide(set_zero, VOLTS_PER_NM)
+        else:
+            set_zero = scan - np.min(scan)
+            to_height = np.divide(set_zero, VOLTS_PER_NM)
+        heights.append(to_height)
+
+    return heights
+
+
+# Arguments: images: tuple list
+# Returns: list tuple
+def find_edges(images):
+    # Initialize list of arrays for sliced data
+    slices = []
+    widths = []
+
+    # Loop through all images
+    for image in images:
+        image_info = image[0]
+        image_data = image[1]
+        # Only execute find_edge for zoomed images
+        if "zoom" not in image_info:
+            return
+        else:
+            # Get width of scan from image_info
+            width = float(image_info[image_info.index("zoom") + 1][:-6])
+            # ppm = np.shape(image_data)[0] / width
+
+            # sliced horizontal and vertical scans in midpoints of the image
+            z_x = image_data[int(np.shape(image_data)[0] / 2), :]
+            # z_y = image[1][:, int(np.shape(image[1])[0] / 2)]
+
+            # Add array and width data to lists
+            slices.append(z_x)
+            widths.append(width)
+
+    return widths, slices
+
+
+# Arguments: scan_width: list, scan_data: arr list
+# Returns: arr list
+def tilt_correction(scan_width, scan_data):
+    # Initialize list for tilt corrected data
+    sub_arrays = []
+
+    for width, data in zip(scan_width, scan_data):
+        ppm = len(data) / float(width)
+        # upper and lower bounds for isolating flat region
+        upper = 0.9 * np.max(data)
+        lower = 0.1 * np.max(data)
+        # Check if step is falling or rising
+        if np.argmax(data) < np.argmin(data):
+            linear_region = np.where(data > upper)[0][-1]-10
+            y = data[:linear_region]
+            x = np.linspace(0, linear_region / ppm, len(y))
+        else:
+            linear_region = np.where(data < lower)[0][-1]-10
+            y = data[:linear_region]
+            x = np.linspace(0, linear_region / ppm, len(y))
+        # Fit the baseline from the original data
+        fit = np.polyfit(x, y, 1)
+        linear_baseline = np.poly1d(fit)
+
+        # Subtract the linear baseline from all data points and rescale
+        sub_data = data - linear_baseline(np.linspace(0, width, len(data)))
+        scaled = rescale_intensity(sub_data, out_range=(data.min(), data.max()))
+        sub_arrays.append(scaled)
+
+    return sub_arrays
+
+
+# Arguments: scan_data: arr list
+# Returns: same type
+def denoise(scan_data):
+    smoothed = []
+    for data in scan_data:
+        smooth = savgol_filter(data, 8, 1)
+        smoothed.append(smooth)
+
+    return smoothed
+
+
+# Arguments: scan_width: list, scan_data: arr list
+# Returns: list
+def get_step_width(scan_width, scan_data):
+    # Initialize list for step width data
+    step_widths = []
+    # Loop through data
+    for width, data in zip(scan_width, scan_data):
+        ppm = len(data) / float(width)
+        # upper and lower bounds for isolating the step region
+        upper = 0.9 * np.max(data)
+        lower = 0.2 * np.max(data)
+        indices = np.where(np.logical_and(data < upper, data > lower))[0]
+        step_width = abs(indices[-1] - indices[0]) / ppm
+        step_widths.append(step_width)
+
+    return step_widths
+
+
+# Arguments: scan_data: arr list
+# Returns: list tuple
+def get_noise(scan_data):
+    # Initialize lists for peak to peak and rms data
+    peaks = []
+    rms = []
+    for data in scan_data:
+        # upper and lower bounds for isolating flat region
+        upper = 0.9 * np.max(data)
+        lower = 0.1 * np.max(data)
+        # Check if step is falling or rising
+        if np.argmax(data) < np.argmin(data):
+            flat_region = data[:np.where(data > upper)[0][-1]-10]
+        else:
+            flat_region = data[:np.where(data < lower)[0][-1]-10]
+
+        peaks.append(np.ptp(flat_region))
+        rms.append(np.std(flat_region))
+
+    return peaks, rms
+
+
+# Arguments: data: any type
+# Returns: None
 def print_data(data):
     if any(isinstance(element, (tuple, list, np.ndarray)) for element in data):
         neat_format = '\n'.join(str(item) for item in data)
@@ -130,6 +270,8 @@ def print_data(data):
         print(data)
 
 
+# Arguments: data_info: str list, data: arr list, title: str, x_label: str, y_label: str
+# Returns: None
 def create_image(data_info, data, title, x_label, y_label):
     # Get width of scan from data_info
     width = float(data_info[data_info.index("zoom") + 1][:-6])
@@ -149,6 +291,10 @@ def create_image(data_info, data, title, x_label, y_label):
     # plt.show()
 
 
+# Arguments: num_plots: int, plot_type: str, x_data: list, y_data: list, title: str, x_label: str, y_label: str,
+# leg_label: str list, leg_title: str
+# Returns: None
+# Notes: plot_type can be 'line' or 'scatter', all plots must have the same x_data but can have different y_data
 def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, leg_label=None, leg_title=None):
     fig, ax = plt.subplots(num_plots, 1)
     # One plot case
@@ -209,127 +355,6 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
     # plt.show()
 
 
-def volt_to_height(volt_data):
-    # Initialize list of arrays for converted data
-    heights = []
-
-    for scan in volt_data:
-        # Check if iterating over tuples
-        if isinstance(scan, tuple):
-            to_height = rescale_intensity(scan[1], out_range=(0, scan[1].max() / VOLTS_PER_NM))
-        else:
-            to_height = rescale_intensity(scan, out_range=(0, scan.max() / VOLTS_PER_NM))
-        heights.append(to_height)
-
-    return heights
-
-
-def find_edges(images):
-    # Initialize list of arrays for sliced data
-    slices = []
-    widths = []
-
-    # Loop through all images
-    for image in images:
-        image_info = image[0]
-        image_data = image[1]
-        # Only execute find_edge for zoomed images
-        if "zoom" not in image_info:
-            return
-        else:
-            # Get width of scan from image_info
-            width = float(image_info[image_info.index("zoom") + 1][:-6])
-            # ppm = np.shape(image_data)[0] / width
-
-            # sliced horizontal and vertical scans in midpoints of the image
-            z_x = image_data[int(np.shape(image_data)[0] / 2), :]
-            # z_y = image[1][:, int(np.shape(image[1])[0] / 2)]
-
-            # Add array and width data to lists
-            slices.append(z_x)
-            widths.append(width)
-
-    return widths, slices
-
-
-def get_step_width(scan_width, scan_data):
-    # Initialize list for step width data
-    step_widths = []
-    # Loop through data
-    for width, data in zip(scan_width, scan_data):
-        ppm = len(data) / float(width)
-        # upper and lower bounds for isolating the step region
-        upper = 0.9 * np.max(data)
-        lower = 0.2 * np.max(data)
-        indices = np.where(np.logical_and(data < upper, data > lower))[0]
-        step_width = abs(indices[-1] - indices[0]) / ppm
-        step_widths.append(step_width)
-
-    return step_widths
-
-
-def get_noise(scan_data):
-    # Initialize lists for peak to peak and rms data
-    peaks = []
-    rms = []
-    for data in scan_data:
-        # upper and lower bounds for isolating flat region
-        upper = 0.9 * np.max(data)
-        lower = 0.1 * np.max(data)
-        # Check if step is falling or rising
-        if np.argmax(data) < np.argmin(data):
-            flat_region = data[:np.where(data > upper)[0][-1]-10]
-        else:
-            flat_region = data[:np.where(data < lower)[0][-1]-10]
-
-        peaks.append(np.ptp(flat_region))
-        rms.append(np.std(flat_region))
-
-    return peaks, rms
-
-
-def denoise(scan_data):
-    smoothed = []
-    for data in scan_data:
-        smooth = savgol_filter(data, 8, 1)
-        smoothed.append(smooth)
-
-    return smoothed
-
-
-def tilt_correction(scan_width, scan_data):
-    # Initialize list for tilt corrected data
-    sub_arrays = []
-
-    for width, data in zip(scan_width, scan_data):
-        ppm = len(data) / float(width)
-        # upper and lower bounds for isolating flat region
-        upper = 0.9 * np.max(data)
-        lower = 0.1 * np.max(data)
-        # Check if step is falling or rising
-        if np.argmax(data) < np.argmin(data):
-            linear_region = np.where(data > upper)[0][-1]-10
-            y = data[:linear_region]
-            x = np.linspace(0, linear_region / ppm, len(y))
-        else:
-            linear_region = np.where(data < lower)[0][-1]-10
-            y = data[:linear_region]
-            x = np.linspace(0, linear_region / ppm, len(y))
-        # Fit the baseline from the original data
-        fit = np.polyfit(x, y, 1)
-        # coefs = Polynomial.fit(x, y, 1).convert().coef
-        linear_baseline = np.poly1d(fit)
-        # p = Polynomial(coefs)
-
-        # Subtract the linear baseline from all data points and rescale
-        sub_data = data - linear_baseline(np.linspace(0, width, len(data)))
-        # sub_data = data - p(np.linspace(0, width, len(data)))
-        scaled = rescale_intensity(sub_data, out_range=(data.min(), data.max()))
-        sub_arrays.append(scaled)
-
-    return sub_arrays
-
-
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
@@ -339,6 +364,7 @@ if __name__ == '__main__':
     edges = find_edges(constant_force)
     scan_widths = edges[0]
     volt_slice = edges[1]
+    step_height = []
     height_slice = volt_to_height(volt_slice)
     tilt_corrected_volt = tilt_correction(scan_widths, volt_slice)
     tilt_corrected_height = tilt_correction(scan_widths, height_slice)
@@ -347,7 +373,6 @@ if __name__ == '__main__':
     flat = get_noise(tilt_corrected_height)
     steps = get_step_width(scan_widths, denoised_height)
     speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
-    print_data(height_slice)
     create_plot(2,
                 'line',
                 scan_widths,
@@ -381,3 +406,7 @@ if __name__ == '__main__':
                 'Scanning Speed [pixels/s]',
                 'Step Width [microns]')
     plt.show()
+    # test = []
+    # for item in volt_slice:
+    #     test.append(np.ptp(item))
+    # print(np.mean(test))
