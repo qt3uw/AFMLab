@@ -9,10 +9,11 @@ from scipy.signal import savgol_filter
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 PARAM_HEADERS = ['Name', 'Resolution', 'Speed', 'Mode', 'StrainGauge', 'is_Zoom', 'Width',
                  'PID', 'P', 'I', 'D', 'is_Lateral', 'Direction']
-VOLTS_PER_NM = 0.6414615384615386 / 114
+VOLTS_PER_NM_CF = 0.6414615384615386 / 114
+VOLTS_PER_NM_CH = 0.10349999999999998 / 114
 
 
-# Arguments: folder_path: PATH directory
+# Arguments: folder_path: PATH
 # Returns: tuple list. The first element is a list of strings and second is an array
 def get_afm_data(folder_path):
     # Initialize an empty list to store numpy arrays
@@ -130,18 +131,22 @@ def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=No
 
 # Arguments: volt_data: list or arr list
 # Returns: same type
-def volt_to_height(volt_data):
+def volt_to_height(volt_data, mode):
     # Initialize list of arrays for converted data
     heights = []
+    if mode == 'ConstantForce':
+        volts_per_nm = VOLTS_PER_NM_CF
+    else:
+        volts_per_nm = VOLTS_PER_NM_CH
 
     for scan in volt_data:
         # Check if iterating over tuples
         if isinstance(scan, tuple):
-            set_zero = scan[1] - np.min(scan[1])
-            to_height = np.divide(set_zero, VOLTS_PER_NM)
+            set_zero = abs(scan[1] - np.max(scan[1]))
+            to_height = np.divide(set_zero, volts_per_nm)
         else:
-            set_zero = scan - np.min(scan)
-            to_height = np.divide(set_zero, VOLTS_PER_NM)
+            set_zero = abs(scan - np.max(scan))
+            to_height = np.divide(set_zero, volts_per_nm)
         heights.append(to_height)
 
     return heights
@@ -303,7 +308,7 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
         if isinstance(leg_label, list):
             for x, y, label in zip(x_data, y_data, leg_label):
                 # create array for x_data if value is floating point
-                if isinstance(x, float):
+                if isinstance(x, (int, float)):
                     if plot_type == 'scatter':
                         ax.scatter(np.linspace(0, x, len(y)), y, label=label)
                     elif plot_type == 'line':
@@ -316,10 +321,16 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
             plt.legend(title=leg_title)
         # One data set subcase
         else:
-            if plot_type == 'scatter':
-                ax.scatter(x_data, y_data)
-            elif plot_type == 'line':
-                ax.plot(x_data, y_data)
+            if isinstance(x_data, (int, float)):
+                if plot_type == 'scatter':
+                    ax.scatter(np.linspace(0, x_data, len(y_data)), y_data)
+                elif plot_type == 'line':
+                    ax.plot(np.linspace(0, x_data, len(y_data)), y_data)
+            else:
+                if plot_type == 'scatter':
+                    ax.scatter(x_data, y_data)
+                elif plot_type == 'line':
+                    ax.plot(x_data, y_data)
         ax.set_title(title)
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
@@ -331,7 +342,7 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
             if isinstance(leg_label, list):
                 for x, y, label in zip(x_data, y_data[i], leg_label):
                     # create array for x_data if value is floating point
-                    if isinstance(x, float):
+                    if isinstance(x, (int, float)):
                         if plot_type == 'scatter':
                             ax[i].scatter(np.linspace(0, x, len(y)), y, label=label)
                         elif plot_type == 'line':
@@ -344,10 +355,16 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
                     ax[i].legend(title=leg_title)
             # One data set per plot subcase
             else:
-                if plot_type == 'scatter':
-                    ax[i].scatter(x_data, y_data[i])
-                elif plot_type == 'line':
-                    ax[i].plot(x_data, y_data[i])
+                if isinstance(x_data, (int, float)):
+                    if plot_type == 'scatter':
+                        ax[i].scatter(np.linspace(0, x_data, len(y_data[i])), y_data[i])
+                    elif plot_type == 'line':
+                        ax[i].plot(np.linspace(0, x_data, len(y_data[i])), y_data[i])
+                else:
+                    if plot_type == 'scatter':
+                        ax[i].scatter(x_data, y_data[i])
+                    elif plot_type == 'line':
+                        ax[i].plot(x_data, y_data[i])
             fig.suptitle(title)
             ax[i].set_xlabel(x_label)
             ax[i].set_ylabel(y_label[i])
@@ -359,13 +376,14 @@ if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
     constant_force = filter_data(zoom_images, ['ConstantForce'])
-    constant_height = filter_data(zoom_images, ['ConstantHeight'])
-    height_data = volt_to_height(constant_force)
+    constant_height = filter_data(zoom_images, ['ConstantHeight'], ['InvertedCircles', 'Lateral'])
     edges = find_edges(constant_force)
+    ch_edge = find_edges(constant_height)
     scan_widths = edges[0]
     volt_slice = edges[1]
-    step_height = []
-    height_slice = volt_to_height(volt_slice)
+    height_slice = volt_to_height(volt_slice, 'ConstantForce')
+    ch_slice = volt_to_height(ch_edge[1], 'ConstantHeight')
+    tilt_corrected_ch = tilt_correction(ch_edge[0], ch_slice)
     tilt_corrected_volt = tilt_correction(scan_widths, volt_slice)
     tilt_corrected_height = tilt_correction(scan_widths, height_slice)
     denoised_volt = denoise(tilt_corrected_volt)
@@ -373,6 +391,15 @@ if __name__ == '__main__':
     flat = get_noise(tilt_corrected_height)
     steps = get_step_width(scan_widths, denoised_height)
     speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
+    names = get_parameter(constant_height, 'Name')
+    create_plot(1,
+                'line',
+                ch_edge[0],
+                tilt_corrected_ch,
+                'Constant Height',
+                'x pos',
+                'voltage')
+    plt.show()
     create_plot(2,
                 'line',
                 scan_widths,
@@ -407,6 +434,6 @@ if __name__ == '__main__':
                 'Step Width [microns]')
     plt.show()
     # test = []
-    # for item in volt_slice:
+    # for item in ch_edge[1]:
     #     test.append(np.ptp(item))
     # print(np.mean(test))
