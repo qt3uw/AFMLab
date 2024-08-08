@@ -394,8 +394,8 @@ if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
     constant_force = filter_data(zoom_images, ['ConstantForce'])
-    constant_height = filter_data(zoom_images, ['ConstantHeight'], ['Lateral'])
-    lateral_force = filter_data(zoom_images, ['Lateral'])
+    constant_height = filter_data(zoom_images, ['InvertedCircles', 'ConstantHeight'], ['Lateral'])
+    lateral_force = filter_data(zoom_images, ['InvertedCircles', 'Lateral'])
     cf_edges = find_edges(constant_force)
     cf_widths = cf_edges[0]
     cf_volts = cf_edges[1]
@@ -413,16 +413,19 @@ if __name__ == '__main__':
     cf_flat = get_noise(cf_tilt_corrected)
     cf_steps = get_step_width(cf_widths, cf_denoised)
     cf_speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
-    ch_names = get_parameter(constant_height, 'Name')
-    create_image(lateral_force, ch_names, 'x pos', 'y pos')
+    ch_names = get_parameter(lateral_force, 'Name')
+    print_data(ch_volts)
+    ch_params = get_parameter(constant_height)
+    print_data(ch_params)
     create_plot(2,
                 'line',
                 ch_widths,
                 [ch_heights, lateral_volts],
                 'Constant Height',
                 'x pos [micron]',
-                ['x deflection voltage', 'y deflection voltage'],
+                ['height [nm]', 'y deflection voltage'],
                 ch_names)
+    # plt.show()
     create_plot(2,
                 'line',
                 cf_widths,
@@ -455,4 +458,3 @@ if __name__ == '__main__':
                 'Step Width',
                 'Scanning Speed [pixels/s]',
                 'Step Width [microns]')
-    plt.show()
