@@ -75,7 +75,7 @@ def filter_data(data, includes=None, excludes=None):
 
 # Arguments: data: tuple list, param: str, as_type: str, begin_slice: int, end_slice: int
 # Returns: pandas dataframe, str list
-# Notes: param can be any element of PARAM_HEADERS, as_type can be 'float' or 'int' (otherwise assume str)
+# Notes: param must be an element of PARAM_HEADERS, as_type can be 'float' or 'int' (otherwise assume str)
 def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=None):
     # Initialize lists for dataframe and parameter of interest
     info_list = []
@@ -129,7 +129,7 @@ def get_parameter(data, param=None, as_type=None, begin_slice=None, end_slice=No
         return get_param
 
 
-# Arguments: volt_data: list or arr list
+# Arguments: volt_data: tuple list or arr list
 # Returns: same type
 def volt_to_height(volt_data, mode):
     # Initialize list of arrays for converted data
@@ -225,6 +225,17 @@ def denoise(scan_data):
     return smoothed
 
 
+# Arguments: data: arr list
+# Returns: float
+def get_step_height(data):
+    # Initialize list for scan heights
+    step_heights = []
+    for scan in data:
+        step_heights.append(np.ptp(scan))
+
+    return np.mean(step_heights)
+
+
 # Arguments: scan_width: list, scan_data: arr list
 # Returns: list
 def get_step_width(scan_width, scan_data):
@@ -268,7 +279,7 @@ def get_noise(scan_data):
 # Arguments: data: any type
 # Returns: None
 def print_data(data):
-    if any(isinstance(element, (tuple, list, np.ndarray)) for element in data):
+    if isinstance(data, list) and all(isinstance(element, (tuple, list, np.ndarray)) for element in data):
         neat_format = '\n'.join(str(item) for item in data)
         print(neat_format)
     else:
@@ -277,23 +288,26 @@ def print_data(data):
 
 # Arguments: data_info: str list, data: arr list, title: str, x_label: str, y_label: str
 # Returns: None
-def create_image(data_info, data, title, x_label, y_label):
-    # Get width of scan from data_info
-    width = float(data_info[data_info.index("zoom") + 1][:-6])
-    # check if image is a zoomed image
-    if "zoom" in data_info:
-        extent = [0, width, width, 0]
-    else:
-        extent = [0, 20, 20, 0]
+def create_image(images, titles, x_label, y_label):
+    for image, title in zip(images, titles):
+        image_info = image[0]
+        image_data = image[1]
+        # Get width of scan from data_info
+        width = float(image_info[image_info.index("zoom") + 1][:-6])
+        # check if image is a zoomed image
+        if "zoom" in image_info:
+            extent = [0, width, width, 0]
+        else:
+            extent = [0, 20, 20, 0]
 
-    # Create color plot of data
-    fig, ax = plt.subplots(1, 1)
-    cax = ax.imshow(data, extent=extent)
-    fig.colorbar(cax)
-    ax.set_title(title)
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-    # plt.show()
+        # Create color plot of data
+        fig, ax = plt.subplots(1, 1)
+        cax = ax.imshow(image_data, extent=extent)
+        fig.colorbar(cax)
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        # plt.show()
 
 
 # Arguments: num_plots: int, plot_type: str, x_data: list, y_data: list, title: str, x_label: str, y_label: str,
@@ -305,7 +319,9 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
     # One plot case
     if num_plots == 1:
         # Multiple data sets subcase
-        if isinstance(leg_label, list):
+        if len(np.shape(y_data)) > 1:
+            if not isinstance(leg_label, list):
+                raise ValueError("Make a legend!")
             for x, y, label in zip(x_data, y_data, leg_label):
                 # create array for x_data if value is floating point
                 if isinstance(x, (int, float)):
@@ -339,7 +355,9 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
     else:
         for i in range(num_plots):
             # Multiple data sets per plot subcase
-            if isinstance(leg_label, list):
+            if len(np.shape(y_data[i])) > 1:
+                if not isinstance(leg_label, list):
+                    raise ValueError("Make a legend!")
                 for x, y, label in zip(x_data, y_data[i], leg_label):
                     # create array for x_data if value is floating point
                     if isinstance(x, (int, float)):
@@ -376,64 +394,65 @@ if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
     zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
     constant_force = filter_data(zoom_images, ['ConstantForce'])
-    constant_height = filter_data(zoom_images, ['ConstantHeight'], ['InvertedCircles', 'Lateral'])
-    edges = find_edges(constant_force)
-    ch_edge = find_edges(constant_height)
-    scan_widths = edges[0]
-    volt_slice = edges[1]
-    height_slice = volt_to_height(volt_slice, 'ConstantForce')
-    ch_slice = volt_to_height(ch_edge[1], 'ConstantHeight')
-    tilt_corrected_ch = tilt_correction(ch_edge[0], ch_slice)
-    tilt_corrected_volt = tilt_correction(scan_widths, volt_slice)
-    tilt_corrected_height = tilt_correction(scan_widths, height_slice)
-    denoised_volt = denoise(tilt_corrected_volt)
-    denoised_height = denoise(tilt_corrected_height)
-    flat = get_noise(tilt_corrected_height)
-    steps = get_step_width(scan_widths, denoised_height)
-    speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
-    names = get_parameter(constant_height, 'Name')
-    create_plot(1,
-                'line',
-                ch_edge[0],
-                tilt_corrected_ch,
-                'Constant Height',
-                'x pos',
-                'voltage')
-    plt.show()
+    constant_height = filter_data(zoom_images, ['ConstantHeight'], ['Lateral'])
+    lateral_force = filter_data(zoom_images, ['Lateral'])
+    cf_edges = find_edges(constant_force)
+    cf_widths = cf_edges[0]
+    cf_volts = cf_edges[1]
+    ch_edges = find_edges(constant_height)
+    ch_widths = ch_edges[0]
+    ch_volts = ch_edges[1]
+    lateral_edges = find_edges(lateral_force)
+    lateral_widths = lateral_edges[0]
+    lateral_volts = lateral_edges[1]
+    cf_heights = volt_to_height(cf_volts, 'ConstantForce')
+    ch_heights = volt_to_height(ch_volts, 'ConstantHeight')
+    cf_tilt_corrected = tilt_correction(cf_widths, cf_heights)
+    ch_tilt_corrected = tilt_correction(ch_widths, ch_heights)
+    cf_denoised = denoise(cf_tilt_corrected)
+    cf_flat = get_noise(cf_tilt_corrected)
+    cf_steps = get_step_width(cf_widths, cf_denoised)
+    cf_speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
+    ch_names = get_parameter(constant_height, 'Name')
+    create_image(lateral_force, ch_names, 'x pos', 'y pos')
     create_plot(2,
                 'line',
-                scan_widths,
-                [height_slice, volt_slice],
+                ch_widths,
+                [ch_heights, lateral_volts],
+                'Constant Height',
+                'x pos [micron]',
+                ['x deflection voltage', 'y deflection voltage'],
+                ch_names)
+    create_plot(2,
+                'line',
+                cf_widths,
+                [cf_heights, cf_volts],
                 'Horizontal Edge Resolution',
                 'x pos [microns]',
                 ['height [nm]', 'z piezo voltage'],
-                speeds,
+                cf_speeds,
                 'scanning speed [pps]')
     create_plot(2,
                 'line',
-                scan_widths,
-                [tilt_corrected_height, denoised_height],
+                cf_widths,
+                [cf_tilt_corrected, cf_denoised],
                 'Tilt Corrected and Denoised Height',
                 'x pos [microns]',
                 ['height [nm]', 'height [nm]'],
-                speeds,
+                cf_speeds,
                 'scanning speed [pps]')
     create_plot(2,
                 'scatter',
-                speeds,
-                flat,
+                cf_speeds,
+                cf_flat,
                 'Pk to Pk vs RMS',
                 'Scanning Speed [pixels/s]',
                 ['Pk to Pk [nm]', 'RMS [nm]'])
     create_plot(1,
                 'scatter',
-                speeds,
-                steps,
+                cf_speeds,
+                cf_steps,
                 'Step Width',
                 'Scanning Speed [pixels/s]',
                 'Step Width [microns]')
     plt.show()
-    # test = []
-    # for item in ch_edge[1]:
-    #     test.append(np.ptp(item))
-    # print(np.mean(test))
