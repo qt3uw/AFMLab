@@ -1,10 +1,12 @@
-import numpy as np
-from matplotlib import pyplot as plt
 from pathlib import Path
 import os
+
+from matplotlib import pyplot as plt
+import numpy as np
 import pandas as pd
-from skimage.exposure import rescale_intensity
 from scipy.signal import savgol_filter
+from skimage.exposure import rescale_intensity
+
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
 PARAM_HEADERS = ['Name', 'Resolution', 'Speed', 'Mode', 'StrainGauge', 'is_Zoom', 'Width',
@@ -16,6 +18,11 @@ VOLTS_PER_NM_CH = 0.10349999999999998 / 114
 # Arguments: folder_path: PATH
 # Returns: tuple list. The first element is a list of strings and second is an array
 def get_afm_data(folder_path):
+    """
+    Gets AFM data...
+    :param folder_path: path to folder
+    :return: Tuple list
+    """
     # Initialize an empty list to store numpy arrays
     array_list = []
     str_list = []
@@ -32,14 +39,7 @@ def get_afm_data(folder_path):
 
             # Convert the file_name into list of identifiers
             # check if file is duplicate
-            if str(file_name).split()[0].endswith('.csv'):
-                file_info = str(file_name).split()[0][:-4].split('_')
-            else:
-                file_info = str(file_name).split()[0].split('_')
-            # # check if optional parameters are in file info
-            # for i, delta in zip(range(4, 9), PARAM_HEADERS[4:]):
-            #     if delta not in file_info:
-            #         file_info.insert(i, 'Default/None')
+            file_info = str(file_name).split('.csv')[0].split('_')
 
             # Append the numpy array and string list to the corresponding list
             array_list.append(array)
@@ -392,40 +392,43 @@ def create_plot(num_plots, plot_type, x_data, y_data, title, x_label, y_label, l
 
 if __name__ == '__main__':
     AFMdata = get_afm_data(DATA_DIR)
-    zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron'])
+
+    zoom_images = filter_data(AFMdata, ['zoom', 'backward'], ['3.5micron', '3.7micron', '3.9micron', 'PID'])
     constant_force = filter_data(zoom_images, ['ConstantForce'])
     constant_height = filter_data(zoom_images, ['InvertedCircles', 'ConstantHeight'], ['Lateral'])
     lateral_force = filter_data(zoom_images, ['InvertedCircles', 'Lateral'])
+
     cf_edges = find_edges(constant_force)
     cf_widths = cf_edges[0]
     cf_volts = cf_edges[1]
+
     ch_edges = find_edges(constant_height)
     ch_widths = ch_edges[0]
     ch_volts = ch_edges[1]
+
     lateral_edges = find_edges(lateral_force)
     lateral_widths = lateral_edges[0]
     lateral_volts = lateral_edges[1]
+
     cf_heights = volt_to_height(cf_volts, 'ConstantForce')
     ch_heights = volt_to_height(ch_volts, 'ConstantHeight')
+
     cf_tilt_corrected = tilt_correction(cf_widths, cf_heights)
     ch_tilt_corrected = tilt_correction(ch_widths, ch_heights)
+
     cf_denoised = denoise(cf_tilt_corrected)
+
     cf_flat = get_noise(cf_tilt_corrected)
+
     cf_steps = get_step_width(cf_widths, cf_denoised)
+
     cf_speeds = get_parameter(constant_force, 'Speed', 'int', 0, -3)
+    cf_pid = get_parameter(constant_force, 'P', 'float')
     ch_names = get_parameter(lateral_force, 'Name')
-    print_data(ch_volts)
-    ch_params = get_parameter(constant_height)
-    print_data(ch_params)
-    create_plot(2,
-                'line',
-                ch_widths,
-                [ch_heights, lateral_volts],
-                'Constant Height',
-                'x pos [micron]',
-                ['height [nm]', 'y deflection voltage'],
-                ch_names)
-    # plt.show()
+
+    print_data(constant_force)
+    print_data(lateral_force)
+
     create_plot(2,
                 'line',
                 cf_widths,
@@ -434,7 +437,7 @@ if __name__ == '__main__':
                 'x pos [microns]',
                 ['height [nm]', 'z piezo voltage'],
                 cf_speeds,
-                'scanning speed [pps]')
+                'scanning speeds [pps]')
     create_plot(2,
                 'line',
                 cf_widths,
@@ -443,7 +446,16 @@ if __name__ == '__main__':
                 'x pos [microns]',
                 ['height [nm]', 'height [nm]'],
                 cf_speeds,
-                'scanning speed [pps]')
+                'scanning speeds [pps]')
+    # plt.show()
+    create_plot(2,
+                'line',
+                ch_widths,
+                [ch_heights, lateral_volts],
+                'Constant Height',
+                'x pos [micron]',
+                ['height [nm]', 'y deflection voltage'],
+                ch_names)
     create_plot(2,
                 'scatter',
                 cf_speeds,
@@ -458,3 +470,4 @@ if __name__ == '__main__':
                 'Step Width',
                 'Scanning Speed [pixels/s]',
                 'Step Width [microns]')
+    # plt.show()
