@@ -175,44 +175,41 @@ def get_step_height(data):
 if __name__ == '__main__':
     afmscans = get_scan_data_from_directory('TestSpeed')
 
-    figs, axs = plt.subplots(2, 2)
+    scan_widths = []
     edge_resolution = []
     tilt_corrected_and_denoised = []
+    scan_speeds = []
     step_widths = []
     rms_noise = []
     for afmscan in afmscans:
-        axs[0, 0].plot(np.linspace(0, afmscan.width, len(afmscan.data)), afmscan.volt_to_height(afmscan.find_edge()),
-                       label=afmscan.speed)
-        axs[0, 0].set_title('Edge Resolution')
-        axs[1, 0].plot(np.linspace(0, afmscan.width, len(afmscan.data)), afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))),
-                       label=afmscan.speed)
-        axs[1, 0].set_title('Tilt corrected and denoised')
-        for i in range(2):
-            axs[i, 0].set_xlabel('x [microns]')
-            axs[i, 0].set_ylabel('height [nm]')
-            axs[i, 0].legend(title='Scanning Speeds [pps]')
+        scan_widths.append(np.linspace(0, afmscan.width, len(afmscan.data)))
+        edge_resolution.append(afmscan.volt_to_height(afmscan.find_edge()))
+        tilt_corrected_and_denoised.append(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))))
+        scan_speeds.append(afmscan.speed)
+        step_widths.append(afmscan.get_step_width(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge())))))
+        rms_noise.append(afmscan.get_noise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))))
 
-        # test = afmscan.get_step_width(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))))
-        if afmscan.backward:
-            label = "True"
-            color = "blue"
-        else:
-            label = "False"
-            color = "red"
+    figs, axs = plt.subplots(2, 2)
+    for ax in axs.flat:
+        ax.grid(True)
 
+    axs[0, 0].plot(scan_widths[:2], edge_resolution[:2])
+    axs[0, 0].set_title('Edge Resolution')
+    axs[1, 0].plot(scan_widths, tilt_corrected_and_denoised)
+    axs[1, 0].set_title('Tilt corrected and denoised')
+    for i in range(2):
+        axs[i, 0].set_xlabel('x [microns]')
+        axs[i, 0].set_ylabel('height [nm]')
+        # axs[i, 0].legend(title='Scanning Speeds [pps]')
 
+    axs[0, 1].scatter(scan_speeds, step_widths)
+    axs[0, 1].set_title('Step Width')
+    axs[0, 1].set_ylabel('Step Widths')
+    axs[1, 1].scatter(scan_speeds, rms_noise)
+    axs[1, 1].set_title('RMS Noise')
+    axs[1, 1].set_ylabel('RMS [nm]')
+    for i in range(2):
+        axs[i, 1].set_xlabel('Scanning Speed')
+        # axs[i, 1].legend(title='isBackward')
 
-        axs[0, 1].plot(afmscan.speed, afmscan.get_step_width(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge())))),
-                       marker='o', linestyle='None', label = label, color=color)
-        axs[0, 1].set_title('Step Width')
-        axs[0, 1].set_ylabel('Step Widths')
-        axs[1, 1].plot(afmscan.speed, afmscan.get_noise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))),
-                       marker='o', linestyle='None', label = label, color=color)
-        axs[1, 1].set_title('RMS Noise')
-        axs[1, 1].set_ylabel('RMS [nm]')
-        for i in range(2):
-            axs[i, 1].set_xlabel('Scanning Speed')
-            axs[i, 1].legend(title='isBackward')
-        for ax in axs.flat:
-            ax.grid(True)
-    plt.show()
+plt.show()
