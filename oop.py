@@ -1,17 +1,18 @@
+from ast import literal_eval
 from dataclasses import dataclass, field
 from pathlib import Path
 import os
-from ast import literal_eval
 
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy.signal import savgol_filter
+from skimage.exposure import rescale_intensity
 
-
-# Example most complicated filename
-# sample_resolution256_speed100_modeconstantforce_stra
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM')
+VOLTS_PER_NM_CF = 0.6414615384615386 / 114
+VOLTS_PER_NM_CH = 0.10349999999999998 / 114
 
 
 @dataclass
@@ -58,21 +59,92 @@ class ScanData:
 
         return self
 
-    def plot_afm_image(self):
-        # Create color plot of data
+    def plot_afm_image(self, data_array=None):
+        if data_array is None:
+            data_array = self.data
         fig, ax = plt.subplots(1, 1)
-        cax = ax.imshow(self.data, extent=[0, self.width, self.width, 0])
+        cax = ax.imshow(data_array, extent=[0, self.width, self.width, 0])
         fig.colorbar(cax)
         ax.set_title('AFM Scan Image')
         ax.set_xlabel('x [microns]')
         ax.set_ylabel('y [microns]')
         # plt.show()
 
-    def get_step_width(self):
-        step_width = None  # code here
+    def volt_to_height(self, data_array=None):
+        if self.mode.lower() == 'constantforce':
+            volts_per_nm = VOLTS_PER_NM_CF
+        else:
+            volts_per_nm = VOLTS_PER_NM_CH
+
+        if data_array is None:
+            data_array = self.data
+        set_zero = abs(data_array - np.max(data_array))
+        to_height = np.divide(set_zero, volts_per_nm)
+
+        return to_height
+
+    def find_edge(self, y_coord=None):
+        ppm = self.res / self.width
+        if y_coord is None:
+            slice_pos = self.res / 2
+        else:
+            slice_pos = y_coord * ppm
+        edge_slice = self.data[int(slice_pos), :]
+
+        return edge_slice
+
+    def tilt_correct(self, data_array):
+        ppm = self.res / self.width
+        # upper and lower bounds for isolating flat region
+        upper = 0.9 * np.max(data_array)
+        lower = 0.1 * np.max(data_array)
+        # Check if step is falling or rising
+        if np.argmax(data_array) < np.argmin(data_array):
+            linear_region = np.where(data_array > upper)[0][-1] - 10
+            y = data_array[:linear_region]
+            x = np.linspace(0, linear_region / ppm, len(y))
+        else:
+            linear_region = np.where(data_array < lower)[0][-1] - 10
+            y = data_array[:linear_region]
+            x = np.linspace(0, linear_region / ppm, len(y))
+        # Fit the baseline from the original data
+        fit = np.polyfit(x, y, 1)
+        linear_baseline = np.poly1d(fit)
+
+        # Subtract the linear baseline from all data points and rescale
+        sub_data = data_array - linear_baseline(np.linspace(0, self.width, len(data_array)))
+        scaled = rescale_intensity(sub_data, out_range=(data_array.min(), data_array.max()))
+
+        return scaled
+
+    def denoise(self, data_array):
+        smooth = savgol_filter(data_array, 8, 1)
+
+        return smooth
+
+    def get_step_width(self, data_array):
+        ppm = self.res / self.width
+        # upper and lower bounds for isolating the step region
+        upper = 0.9 * np.max(data_array)
+        lower = 0.2 * np.max(data_array)
+        indices = np.where(np.logical_and(data_array < upper, data_array > lower))[0]
+        step_width = abs(indices[-1] - indices[0]) / ppm
+
         return step_width
 
-        # Code here to put the right number from infostring into self.__dict__[key] =
+    def get_noise(self, data_array):
+        # upper and lower bounds for isolating flat region
+        upper = 0.9 * np.max(data_array)
+        lower = 0.1 * np.max(data_array)
+        # Check if step is falling or rising
+        if np.argmax(data_array) < np.argmin(data_array):
+            flat_region = data_array[:np.where(data_array > upper)[0][-1] - 10]
+        else:
+            flat_region = data_array[:np.where(data_array < lower)[0][-1] - 10]
+
+        rms = np.std(flat_region)
+
+        return rms
 
 
 def get_scan_data_from_directory(folder_name):
@@ -91,12 +163,56 @@ def get_scan_data_from_directory(folder_name):
     return scan_data
 
 
-if __name__ == '__main__':
-    afmscans = get_scan_data_from_directory('TestScans')
+def get_step_height(data):
+    # Initialize list for scan heights
+    step_heights = []
+    for scan in data:
+        step_heights.append(np.ptp(scan))
 
-    # figs, axs = plt.subplots(1, 1)
+    return np.mean(step_heights)
+
+
+if __name__ == '__main__':
+    afmscans = get_scan_data_from_directory('TestSpeed')
+
+    figs, axs = plt.subplots(2, 2)
+    edge_resolution = []
+    tilt_corrected_and_denoised = []
+    step_widths = []
+    rms_noise = []
     for afmscan in afmscans:
-        print(afmscan.__dict__)
-        afmscan.plot_afm_image()
+        axs[0, 0].plot(np.linspace(0, afmscan.width, len(afmscan.data)), afmscan.volt_to_height(afmscan.find_edge()),
+                       label=afmscan.speed)
+        axs[0, 0].set_title('Edge Resolution')
+        axs[1, 0].plot(np.linspace(0, afmscan.width, len(afmscan.data)), afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))),
+                       label=afmscan.speed)
+        axs[1, 0].set_title('Tilt corrected and denoised')
+        for i in range(2):
+            axs[i, 0].set_xlabel('x [microns]')
+            axs[i, 0].set_ylabel('height [nm]')
+            axs[i, 0].legend(title='Scanning Speeds [pps]')
+
+        # test = afmscan.get_step_width(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))))
+        if afmscan.backward:
+            label = "True"
+            color = "blue"
+        else:
+            label = "False"
+            color = "red"
+
+
+
+        axs[0, 1].plot(afmscan.speed, afmscan.get_step_width(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge())))),
+                       marker='o', linestyle='None', label = label, color=color)
+        axs[0, 1].set_title('Step Width')
+        axs[0, 1].set_ylabel('Step Widths')
+        axs[1, 1].plot(afmscan.speed, afmscan.get_noise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))),
+                       marker='o', linestyle='None', label = label, color=color)
+        axs[1, 1].set_title('RMS Noise')
+        axs[1, 1].set_ylabel('RMS [nm]')
+        for i in range(2):
+            axs[i, 1].set_xlabel('Scanning Speed')
+            axs[i, 1].legend(title='isBackward')
+        for ax in axs.flat:
+            ax.grid(True)
     plt.show()
-    #     axs.plot(scans.speed, scans.get_step_width(), marker='o', linestyle='None', color='k')
