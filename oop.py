@@ -20,10 +20,10 @@ class ScanData:
     res: int = 250
     speed: int = 100
     mode: str = 'ConstantForce'
-    straingauge: str = 'On'
+    straingauge: bool = False
     pid: tuple = (0.1, 0.1, 0.1)
     lateral: bool = False
-    backward: bool = True
+    backward: bool = False
     data: np.ndarray = field(default_factory=list)
 
     def create_from_filepath(self, file_path):
@@ -39,8 +39,11 @@ class ScanData:
         for infostring in file_info:
             for key in self.__dict__:
                 if key.lower() in infostring.lower():
-                    val = infostring.replace(key, '')
-                    # self.__dict__[key].type(val)
+                    if key.lower() == infostring.lower():
+                        val = not self.__dict__[key]
+                    else:
+                        val = infostring.lower().replace(key.lower(), '')
+                    val = type(self.__dict__[key])(val)
                     self.__dict__[key] = val
 
         with open(file_path, 'r') as f:
