@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 import os
+from ast import literal_eval
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -10,7 +11,7 @@ import pandas as pd
 # Example most complicated filename
 # sample_resolution256_speed100_modeconstantforce_stra
 
-DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM\Scans')
+DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM')
 
 
 @dataclass
@@ -39,11 +40,16 @@ class ScanData:
         for infostring in file_info:
             for key in self.__dict__:
                 if key.lower() in infostring.lower():
+                    # case for boolean attributes
                     if key.lower() == infostring.lower():
                         val = not self.__dict__[key]
                     else:
                         val = infostring.lower().replace(key.lower(), '')
-                    val = type(self.__dict__[key])(val)
+                    # case for tuple
+                    if isinstance(self.__dict__[key], tuple):
+                        val = literal_eval(val)
+                    else:
+                        val = type(self.__dict__[key])(val)
                     self.__dict__[key] = val
 
         with open(file_path, 'r') as f:
@@ -53,7 +59,14 @@ class ScanData:
         return self
 
     def plot_afm_image(self):
-        pass
+        # Create color plot of data
+        fig, ax = plt.subplots(1, 1)
+        cax = ax.imshow(self.data, extent=[0, self.width, self.width, 0])
+        fig.colorbar(cax)
+        ax.set_title('AFM Scan Image')
+        ax.set_xlabel('x [microns]')
+        ax.set_ylabel('y [microns]')
+        # plt.show()
 
     def get_step_width(self):
         step_width = None  # code here
@@ -62,7 +75,9 @@ class ScanData:
         # Code here to put the right number from infostring into self.__dict__[key] =
 
 
-def get_scan_data_from_directory(folder_path):
+def get_scan_data_from_directory(folder_name):
+    folder_path = os.path.join(DATA_DIR, folder_name)
+
     filepaths = []
     for file_name in os.listdir(folder_path):
         if file_name.endswith('.csv'):
@@ -77,16 +92,11 @@ def get_scan_data_from_directory(folder_path):
 
 
 if __name__ == '__main__':
-    # p = ScanData()
-    # p = p.create_from_filepath(DATA_DIR)
-    # print(p.Name)
-    # p.Name = 'changed name'
-    # print(p.Name)
-    # print(p.__dict__)
-    afmscans = get_scan_data_from_directory(DATA_DIR)
+    afmscans = get_scan_data_from_directory('TestScans')
 
     # figs, axs = plt.subplots(1, 1)
     for afmscan in afmscans:
-        print(type(afmscan))
         print(afmscan.__dict__)
+        afmscan.plot_afm_image()
+    plt.show()
     #     axs.plot(scans.speed, scans.get_step_width(), marker='o', linestyle='None', color='k')
