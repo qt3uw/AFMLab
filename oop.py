@@ -31,7 +31,7 @@ class ScanData:
 
     def create_from_filepath(self, file_path):
         """
-        This method takes an AFM data filepath and modifies the instance of ScanParameters to store parameter data
+        This method takes an AFM data filepath and modifies the instance of ScanData to store parameter data
         :param file_path:
         :return: self
         """
@@ -145,6 +145,13 @@ class ScanData:
 
 
 def get_scan_data_from_directory(folder_name, includes=None, excludes=None):
+    """
+    This function takes a folder name and creates a ScanData instance for every allowed file the folder
+    :param folder_name: String
+    :param includes: List of strings
+    :param excludes: List of strings
+    :return: List of ScanData instances
+    """
     folder_path = os.path.join(DATA_DIR, folder_name)
 
     filepaths = []
@@ -167,6 +174,11 @@ def get_scan_data_from_directory(folder_name, includes=None, excludes=None):
 
 
 def get_step_volts_for_calibration(data):
+    """
+    This function takes a list of data arrays and calculates the average peak to peak voltage for height calibration
+    :param data: numpy array
+    :return: float
+    """
     # Initialize list for scan heights
     step_heights = []
     for scan in data:
@@ -176,33 +188,35 @@ def get_step_volts_for_calibration(data):
 
 
 if __name__ == '__main__':
-    afmscans_back = get_scan_data_from_directory('TestSpeed', includes=['backward'])
     afmscans = get_scan_data_from_directory('TestSpeed', excludes=['backward'])
+    afmscans_back = get_scan_data_from_directory('TestSpeed', includes=['backward'])
 
     scan_widths = []
     edge_resolution = []
     tilt_corrected_and_denoised = []
     scan_speeds = []
+    scan_speeds_back = []
     step_widths = []
     step_widths_back = []
     rms_noise = []
     rms_noise_back = []
-    step_volts = []
+    # step_volts = []
     for afmscan, afmscan_back in zip(afmscans, afmscans_back):
-        step_volts.append(afmscan.find_edge().data_slice)
+        # step_volts.append(afmscan.find_edge().data_slice)
         scan_widths.append(np.linspace(0, afmscan.width, len(afmscan.data)))
         edge_resolution.append(afmscan.find_edge().volt_to_height().data_slice)
         tilt_corrected_and_denoised.append(afmscan.tilt_correct().denoise())
         scan_speeds.append(afmscan.speed)
-        scan_speeds.append(afmscan_back.speed)
+        scan_speeds_back.append(afmscan_back.speed)
         step_widths.append(afmscan.get_step_width())
-        step_widths.append(afmscan_back.get_step_width())
+        step_widths_back.append(afmscan_back.find_edge().volt_to_height().tilt_correct().get_step_width())
         rms_noise.append(afmscan.get_noise())
         rms_noise_back.append(afmscan_back.get_noise())
+    # print(get_step_volts_for_calibration(step_volts))
 
     figs, axs = plt.subplots(2, 2)
-    for ax in axs.flat:
-        ax.grid(True)
+    for axs in axs.flat:
+        axs.grid(True)
 
     [axs[0, 0].plot(x, y) for x, y in zip(scan_widths, edge_resolution)]
     axs[0, 0].set_title('Edge Resolution')
@@ -214,14 +228,15 @@ if __name__ == '__main__':
         axs[i, 0].set_ylabel('height [nm]')
         # axs[i, 0].legend(title='Scanning Speeds [pps]')
 
-    [axs[0, 1].scatter(scan_speeds, y, label=label) for y, label in zip([step_widths, step_widths_back], ['forward', 'backward'])]
+    [axs[0, 1].scatter(x, y, label=label) for x, y, label in
+        zip([scan_speeds, scan_speeds_back], [step_widths, step_widths_back], ['forward', 'backward'])]
     axs[0, 1].set_title('Step Width')
     axs[0, 1].set_ylabel('Step Widths [microns]')
-    [axs[1, 1].scatter(scan_speeds, y, label=label) for y, label in zip([rms_noise, rms_noise_back], ['forward', 'backward'])]
+    [axs[1, 1].scatter(x, y, label=label) for x, y, label in
+        zip([scan_speeds, scan_speeds_back], [rms_noise, rms_noise_back], ['forward', 'backward'])]
     axs[1, 1].set_title('RMS Noise')
     axs[1, 1].set_ylabel('RMS [nm]')
     for i in range(2):
         axs[i, 1].set_xlabel('Scanning Speed')
         axs[i, 1].legend(title='Scan Direction')
-
-plt.show()
+    plt.show()
