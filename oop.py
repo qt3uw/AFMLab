@@ -27,6 +27,9 @@ class ScanData:
     lateral: bool = False
     backward: bool = False
     data: np.ndarray = field(default_factory=list)
+    data_slice: np.ndarray = field(default_factory=list)
+    step_width: float = 0
+    rms: float = 0
 
     def create_from_filepath(self, file_path):
         """
@@ -59,29 +62,25 @@ class ScanData:
 
         return self
 
-    def plot_afm_image(self, data_array=None):
-        if data_array is None:
-            data_array = self.data
+    def plot_afm_image(self):
         fig, ax = plt.subplots(1, 1)
-        cax = ax.imshow(data_array, extent=[0, self.width, self.width, 0])
+        cax = ax.imshow(self.data, extent=[0, self.width, self.width, 0])
         fig.colorbar(cax)
         ax.set_title('AFM Scan Image')
         ax.set_xlabel('x [microns]')
         ax.set_ylabel('y [microns]')
         # plt.show()
 
-    def volt_to_height(self, data_array=None):
+    def volt_to_height(self):
         if self.mode.lower() == 'constantforce':
             volts_per_nm = VOLTS_PER_NM_CF
         else:
             volts_per_nm = VOLTS_PER_NM_CH
 
-        if data_array is None:
-            data_array = self.data
-        set_zero = abs(data_array - np.max(data_array))
-        to_height = np.divide(set_zero, volts_per_nm)
+        set_zero = abs(self.data_slice - np.max(self.data_slice))
+        self.data_slice = np.divide(set_zero, volts_per_nm)
 
-        return to_height
+        return self
 
     def find_edge(self, y_coord=None):
         ppm = self.res / self.width
@@ -89,62 +88,62 @@ class ScanData:
             slice_pos = self.res / 2
         else:
             slice_pos = y_coord * ppm
-        edge_slice = self.data[int(slice_pos), :]
+        self.data_slice = self.data[int(slice_pos), :]
 
-        return edge_slice
+        return self
 
-    def tilt_correct(self, data_array):
+    def tilt_correct(self):
         ppm = self.res / self.width
         # upper and lower bounds for isolating flat region
-        upper = 0.9 * np.max(data_array)
-        lower = 0.1 * np.max(data_array)
+        upper = 0.9 * np.max(self.data_slice)
+        lower = 0.1 * np.max(self.data_slice)
         # Check if step is falling or rising
-        if np.argmax(data_array) < np.argmin(data_array):
-            linear_region = np.where(data_array > upper)[0][-1] - 10
-            y = data_array[:linear_region]
+        if np.argmax(self.data_slice) < np.argmin(self.data_slice):
+            linear_region = np.where(self.data_slice > upper)[0][-1] - 10
+            y = self.data_slice[:linear_region]
             x = np.linspace(0, linear_region / ppm, len(y))
         else:
-            linear_region = np.where(data_array < lower)[0][-1] - 10
-            y = data_array[:linear_region]
+            linear_region = np.where(self.data_slice < lower)[0][-1] - 10
+            y = self.data_slice[:linear_region]
             x = np.linspace(0, linear_region / ppm, len(y))
         # Fit the baseline from the original data
         fit = np.polyfit(x, y, 1)
         linear_baseline = np.poly1d(fit)
 
         # Subtract the linear baseline from all data points and rescale
-        sub_data = data_array - linear_baseline(np.linspace(0, self.width, len(data_array)))
-        scaled = rescale_intensity(sub_data, out_range=(data_array.min(), data_array.max()))
+        sub_data = self.data_slice - linear_baseline(np.linspace(0, self.width, len(self.data_slice)))
+        self.data_slice = rescale_intensity(sub_data, out_range=(self.data_slice.min(), self.data_slice.max()))
 
-        return scaled
+        return self
 
-    def denoise(self, data_array):
-        smooth = savgol_filter(data_array, 8, 1)
+    def denoise(self):
+        smooth = savgol_filter(self.data_slice, 8, 1)
 
         return smooth
 
-    def get_step_width(self, data_array):
+    def get_step_width(self):
         ppm = self.res / self.width
         # upper and lower bounds for isolating the step region
-        upper = 0.9 * np.max(data_array)
-        lower = 0.2 * np.max(data_array)
-        indices = np.where(np.logical_and(data_array < upper, data_array > lower))[0]
-        step_width = abs(indices[-1] - indices[0]) / ppm
+        upper = 0.9 * np.max(self.data_slice)
+        lower = 0.2 * np.max(self.data_slice)
+        indices = np.where(np.logical_and(self.data_slice < upper, self.data_slice > lower))[0]
+        self.step_width = abs(indices[-1] - indices[0]) / ppm
 
-        return step_width
+        return self
 
-    def get_noise(self, data_array):
+    def get_noise(self):
         # upper and lower bounds for isolating flat region
-        upper = 0.9 * np.max(data_array)
-        lower = 0.1 * np.max(data_array)
+        upper = 0.9 * np.max(self.data_slice)
+        lower = 0.1 * np.max(self.data_slice)
         # Check if step is falling or rising
-        if np.argmax(data_array) < np.argmin(data_array):
-            flat_region = data_array[:np.where(data_array > upper)[0][-1] - 10]
+        if np.argmax(self.data_slice) < np.argmin(self.data_slice):
+            flat_region = self.data_slice[:np.where(self.data_slice > upper)[0][-1] - 10]
         else:
-            flat_region = data_array[:np.where(data_array < lower)[0][-1] - 10]
+            flat_region = self.data_slice[:np.where(self.data_slice < lower)[0][-1] - 10]
 
-        rms = np.std(flat_region)
+        self.rms = np.std(flat_region)
 
-        return rms
+        return self
 
 
 def get_scan_data_from_directory(folder_name):
@@ -183,19 +182,19 @@ if __name__ == '__main__':
     rms_noise = []
     for afmscan in afmscans:
         scan_widths.append(np.linspace(0, afmscan.width, len(afmscan.data)))
-        edge_resolution.append(afmscan.volt_to_height(afmscan.find_edge()))
-        tilt_corrected_and_denoised.append(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))))
+        edge_resolution.append(afmscan.find_edge().volt_to_height().data_slice)
+        tilt_corrected_and_denoised.append(afmscan.tilt_correct().denoise())
         scan_speeds.append(afmscan.speed)
-        step_widths.append(afmscan.get_step_width(afmscan.denoise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge())))))
-        rms_noise.append(afmscan.get_noise(afmscan.tilt_correct(afmscan.volt_to_height(afmscan.find_edge()))))
+        step_widths.append(afmscan.get_step_width().step_width)
+        rms_noise.append(afmscan.get_noise().rms)
 
     figs, axs = plt.subplots(2, 2)
     for ax in axs.flat:
         ax.grid(True)
 
-    axs[0, 0].plot(scan_widths[:2], edge_resolution[:2])
+    [axs[0, 0].plot(x, y) for x, y in zip(scan_widths, edge_resolution)]
     axs[0, 0].set_title('Edge Resolution')
-    axs[1, 0].plot(scan_widths, tilt_corrected_and_denoised)
+    [axs[1, 0].plot(x, y) for x, y in zip(scan_widths, tilt_corrected_and_denoised)]
     axs[1, 0].set_title('Tilt corrected and denoised')
     for i in range(2):
         axs[i, 0].set_xlabel('x [microns]')
