@@ -188,6 +188,17 @@ def get_step_volts_for_calibration(data):
 
 
 if __name__ == '__main__':
+    myhair = get_scan_data_from_directory('FunScans')
+    print(myhair[0].__dict__)
+    # myhair[0].plot_afm_image()
+    myhair[0].find_edge(y_coord=2.5).volt_to_height().tilt_correct().plot_afm_image()
+    fig1, ax1 = plt.subplots(1, 1)
+    ax1.plot(np.linspace(0, 20, len(myhair[0].data_slice)), myhair[0].data_slice)
+    ax1.set_title('Slice of My Hair')
+    ax1.set_xlabel('x [microns]')
+    ax1.set_ylabel('height [nm]')
+    plt.show()
+
     afmscans = get_scan_data_from_directory('TestSpeed', excludes=['backward'])
     afmscans_back = get_scan_data_from_directory('TestSpeed', includes=['backward'])
 
@@ -215,8 +226,8 @@ if __name__ == '__main__':
     # print(get_step_volts_for_calibration(step_volts))
 
     figs, axs = plt.subplots(2, 2)
-    for axs in axs.flat:
-        axs.grid(True)
+    for ax in axs.flat:
+        ax.grid(True)
 
     [axs[0, 0].plot(x, y) for x, y in zip(scan_widths, edge_resolution)]
     axs[0, 0].set_title('Edge Resolution')
@@ -239,4 +250,5 @@ if __name__ == '__main__':
     for i in range(2):
         axs[i, 1].set_xlabel('Scanning Speed')
         axs[i, 1].legend(title='Scan Direction')
-    plt.show()
+    # plt.show()
+
