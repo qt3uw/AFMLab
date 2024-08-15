@@ -6,7 +6,7 @@ import os
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.signal import savgol_filter
+from scipy.signal import savgol_filter, find_peaks
 
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM')
@@ -67,6 +67,7 @@ class ScanData:
         ax.set_xlabel('x [microns]')
         ax.set_ylabel('y [microns]')
         # plt.show()
+        return self
 
     def find_edge(self, y_coord=None):
         ppm = self.res / self.width
@@ -75,6 +76,15 @@ class ScanData:
         else:
             slice_pos = y_coord * ppm
         self.data_slice = self.data[int(slice_pos), :]
+
+        return self
+
+    def plot_edge(self):
+        fig, ax = plt.subplots(1, 1)
+        ax.plot(np.linspace(0, self.width, self.res), self.data_slice)
+        ax.set_title('Horizontal Slice of ' + self.name)
+        ax.set_xlabel('x [microns]')
+        ax.set_ylabel('height [nm]')
 
         return self
 
@@ -89,17 +99,20 @@ class ScanData:
 
         return self
 
-    def tilt_correct(self):
-        x = np.linspace(0, self.width, self.res)
-        y = self.data_slice
+    def tilt_correct(self, beg=0, end=res):
+        ppm = self.res / self.width
+        beg = int(beg * ppm)
+        end = int(end * ppm)
+        y = self.data_slice[beg:end]
+        x = np.linspace(0, self.width, len(y))
 
         A = np.vstack([x, np.ones(len(x))]).T
 
         # Calculate the linear fit (m: slope, c: intercept)
         m, c = np.linalg.lstsq(A, y, rcond=None)[0]
 
-        linear_fit = m * x + c
-        subtracted_data = y - linear_fit
+        linear_fit = np.interp(np.linspace(0, self.width, self.res), x, m * x + c)
+        subtracted_data = self.data_slice - linear_fit
         self.data_slice = subtracted_data - subtracted_data.min()
 
         return self
@@ -109,13 +122,25 @@ class ScanData:
 
         return smooth
 
-    def get_step_width(self):
+    def find_step(self):
         ppm = self.res / self.width
-        # upper and lower bounds for isolating the step region
-        upper = 0.9 * np.max(self.denoise())
-        lower = 0.2 * np.max(self.denoise())
-        indices = np.where(np.logical_and(self.denoise() < upper, self.denoise() > lower))[0]
-        step_width = abs(indices[-1] - indices[0]) / ppm
+        peaks, _ = find_peaks(self.denoise())
+        valleys, _ = find_peaks(-self.denoise())
+
+        print(peaks / ppm, valleys / ppm, sep='\n')
+
+        return self
+
+    def get_step_width(self, x_coords):
+        top, bottom = x_coords[0], x_coords[1]
+        ppm = self.res / self.width
+        top_val = self.data_slice[int(top*ppm)]
+        bottom_val = self.data_slice[int(bottom*ppm)]
+        ninety = (top_val - bottom_val) * 0.9
+        ten = (top_val - bottom_val) * 0.1
+        pos_ninety = np.argmin(abs(self.data_slice - ninety))
+        pos_ten = np.argmin(abs(self.data_slice - ten))
+        step_width = abs(pos_ninety - pos_ten) / ppm
 
         return step_width
 
@@ -180,7 +205,6 @@ def get_step_volts_for_calibration(data):
 if __name__ == '__main__':
     myhair = get_scan_data_from_directory('FunScans')
     myhair[0].find_edge(y_coord=2.5).volt_to_height().tilt_correct()
-    print(myhair[0].data_slice)
     fig1, ax1 = plt.subplots(1, 1)
     ax1.plot(np.linspace(0, 20, myhair[0].res), myhair[0].data_slice)
     ax1.set_title('Slice of My Hair')
@@ -198,15 +222,15 @@ if __name__ == '__main__':
         # step_volts.append(afmscan.find_edge().data_slice)
         scan_widths.append(np.linspace(0, afmscan.width, len(afmscan.data)))
         edge_resolution.append(afmscan.find_edge().volt_to_height().data_slice)
-        denoised.append(afmscan.denoise())
-        scan_speeds.append(afmscan.speed)
-        scan_speeds_back.append(afmscan_back.speed)
-        step_widths.append(afmscan.get_step_width())
-        step_widths_back.append(afmscan_back.find_edge().volt_to_height().get_step_width())
-        rms_noise.append(afmscan.get_noise())
-        rms_noise_back.append(afmscan_back.get_noise())
+        denoised.append(afmscan.tilt_correct().denoise())
+        # scan_speeds.append(afmscan.speed)
+        # scan_speeds_back.append(afmscan_back.speed)
+        # step_widths.append(afmscan.get_step_width())
+        # step_widths_back.append(afmscan_back.find_edge().volt_to_height().get_step_width())
+        # rms_noise.append(afmscan.get_noise())
+        # rms_noise_back.append(afmscan_back.get_noise())
     # print(get_step_volts_for_calibration(step_volts))
-
+    print(step_widths)
     figs, axs = plt.subplots(2, 2)
     for ax in axs.flat:
         ax.grid(True)
@@ -220,16 +244,16 @@ if __name__ == '__main__':
         axs[i, 0].set_xlabel('x [microns]')
         axs[i, 0].set_ylabel('height [nm]')
         # axs[i, 0].legend(title='Scanning Speeds [pps]')
-
-    [axs[0, 1].scatter(x, y, label=label) for x, y, label in
-        zip([scan_speeds, scan_speeds_back], [step_widths, step_widths_back], ['forward', 'backward'])]
-    axs[0, 1].set_title('Step Width')
-    axs[0, 1].set_ylabel('Step Widths [microns]')
-    [axs[1, 1].scatter(x, y, label=label) for x, y, label in
-        zip([scan_speeds, scan_speeds_back], [rms_noise, rms_noise_back], ['forward', 'backward'])]
-    axs[1, 1].set_title('RMS Noise')
-    axs[1, 1].set_ylabel('RMS [nm]')
-    for i in range(2):
-        axs[i, 1].set_xlabel('Scanning Speed')
-        axs[i, 1].legend(title='Scan Direction')
-    plt.show()
+    #
+    # [axs[0, 1].scatter(x, y, label=label) for x, y, label in
+    #     zip([scan_speeds, scan_speeds_back], [step_widths, step_widths_back], ['forward', 'backward'])]
+    # axs[0, 1].set_title('Step Width')
+    # axs[0, 1].set_ylabel('Step Widths [microns]')
+    # [axs[1, 1].scatter(x, y, label=label) for x, y, label in
+    #     zip([scan_speeds, scan_speeds_back], [rms_noise, rms_noise_back], ['forward', 'backward'])]
+    # axs[1, 1].set_title('RMS Noise')
+    # axs[1, 1].set_ylabel('RMS [nm]')
+    # for i in range(2):
+    #     axs[i, 1].set_xlabel('Scanning Speed')
+    #     axs[i, 1].legend(title='Scan Direction')
+    # plt.show()
