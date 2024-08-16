@@ -69,13 +69,12 @@ class ScanData:
         # plt.show()
         return self
 
-    def find_edge(self, y_coord=None):
+    def get_edge(self, y_coord=None):
         ppm = self.res / self.width
         if y_coord is None:
-            slice_pos = self.res / 2
-        else:
-            slice_pos = y_coord * ppm
-        self.data_slice = self.data[int(slice_pos), :]
+            y_coord = self.width / 2
+        slice_pos = int(y_coord * ppm)
+        self.data_slice = self.data[slice_pos, :]
 
         return self
 
@@ -99,7 +98,11 @@ class ScanData:
 
         return self
 
-    def tilt_correct(self, beg=0, end=res):
+    def tilt_correct(self, beg=None, end=None):
+        if beg is None:
+            beg = 0
+        if end is None:
+            end = self.res
         ppm = self.res / self.width
         beg = int(beg * ppm)
         end = int(end * ppm)
@@ -122,38 +125,43 @@ class ScanData:
 
         return smooth
 
-    def find_step(self):
+    def find_features(self):
         ppm = self.res / self.width
         peaks, _ = find_peaks(self.denoise())
         valleys, _ = find_peaks(-self.denoise())
 
         print(peaks / ppm, valleys / ppm, sep='\n')
-
         return self
 
-    def get_step_width(self, x_coords):
-        top, bottom = x_coords[0], x_coords[1]
+    def get_step_width(self, step_coords):
+        """
+        :param step_coords: tuple
+        :return: float
+        """
         ppm = self.res / self.width
-        top_val = self.data_slice[int(top*ppm)]
-        bottom_val = self.data_slice[int(bottom*ppm)]
+        # index of top and bottom of step
+        top, bottom = int(step_coords[0]*ppm), int(step_coords[1]*ppm)
+        top_val = self.data_slice[top]
+        bottom_val = self.data_slice[bottom]
+        # nintey and ten percent values
         ninety = (top_val - bottom_val) * 0.9
         ten = (top_val - bottom_val) * 0.1
-        pos_ninety = np.argmin(abs(self.data_slice - ninety))
-        pos_ten = np.argmin(abs(self.data_slice - ten))
+        # closest index of 90-10 values
+        pos_ninety = np.argmin(abs(self.data_slice[min(top, bottom):max(top, bottom)] - ninety))
+        pos_ten = np.argmin(abs(self.data_slice[min(top, bottom):max(top, bottom)] - ten))
         step_width = abs(pos_ninety - pos_ten) / ppm
 
         return step_width
 
-    def get_noise(self):
-        # upper and lower bounds for isolating flat region
-        upper = 0.9 * np.max(self.data_slice)
-        lower = 0.1 * np.max(self.data_slice)
-        # Check if step is falling or rising
-        if np.argmax(self.data_slice) < np.argmin(self.data_slice):
-            flat_region = self.data_slice[:np.where(self.data_slice > upper)[0][-1] - 10]
-        else:
-            flat_region = self.data_slice[:np.where(self.data_slice < lower)[0][-1] - 10]
-
+    def get_noise(self, flat_coords):
+        """
+        :param flat_coords: tuple
+        :return: float
+        """
+        ppm = self.res / self.width
+        # index of start and end of flat region
+        start, end = int(flat_coords[0]*ppm), int(flat_coords[1]*ppm)
+        flat_region = self.data_slice[start:end]
         rms = np.std(flat_region)
 
         return rms
@@ -194,7 +202,6 @@ def get_step_volts_for_calibration(data):
     :param data: numpy array
     :return: float
     """
-    # Initialize list for scan heights
     step_heights = []
     for scan in data:
         step_heights.append(np.ptp(scan))
@@ -204,56 +211,10 @@ def get_step_volts_for_calibration(data):
 
 if __name__ == '__main__':
     myhair = get_scan_data_from_directory('FunScans')
-    myhair[0].find_edge(y_coord=2.5).volt_to_height().tilt_correct()
+    myhair[0].get_edge(y_coord=2.5).volt_to_height().tilt_correct()
     fig1, ax1 = plt.subplots(1, 1)
     ax1.plot(np.linspace(0, 20, myhair[0].res), myhair[0].data_slice)
     ax1.set_title('Slice of My Hair')
     ax1.set_xlabel('x [microns]')
     ax1.set_ylabel('height [nm]')
     plt.show()
-
-    afmscans = get_scan_data_from_directory('TestSpeed', excludes=['backward'])
-    afmscans_back = get_scan_data_from_directory('TestSpeed', includes=['backward'])
-
-    (scan_widths, edge_resolution, denoised, scan_speeds, scan_speeds_back,
-     step_widths, step_widths_back, rms_noise, rms_noise_back) = [[] for _ in range(9)]
-    # step_volts = []
-    for afmscan, afmscan_back in zip(afmscans, afmscans_back):
-        # step_volts.append(afmscan.find_edge().data_slice)
-        scan_widths.append(np.linspace(0, afmscan.width, len(afmscan.data)))
-        edge_resolution.append(afmscan.find_edge().volt_to_height().data_slice)
-        denoised.append(afmscan.tilt_correct().denoise())
-        # scan_speeds.append(afmscan.speed)
-        # scan_speeds_back.append(afmscan_back.speed)
-        # step_widths.append(afmscan.get_step_width())
-        # step_widths_back.append(afmscan_back.find_edge().volt_to_height().get_step_width())
-        # rms_noise.append(afmscan.get_noise())
-        # rms_noise_back.append(afmscan_back.get_noise())
-    # print(get_step_volts_for_calibration(step_volts))
-    print(step_widths)
-    figs, axs = plt.subplots(2, 2)
-    for ax in axs.flat:
-        ax.grid(True)
-
-    [axs[0, 0].plot(x, y) for x, y in zip(scan_widths, edge_resolution)]
-    axs[0, 0].set_title('Edge Resolution')
-    # axs[0, 0].legend(title='Scanning Speeds [pps]', fontsize=6)
-    [axs[1, 0].plot(x, y) for x, y in zip(scan_widths, denoised)]
-    axs[1, 0].set_title('Tilt corrected and denoised')
-    for i in range(2):
-        axs[i, 0].set_xlabel('x [microns]')
-        axs[i, 0].set_ylabel('height [nm]')
-        # axs[i, 0].legend(title='Scanning Speeds [pps]')
-    #
-    # [axs[0, 1].scatter(x, y, label=label) for x, y, label in
-    #     zip([scan_speeds, scan_speeds_back], [step_widths, step_widths_back], ['forward', 'backward'])]
-    # axs[0, 1].set_title('Step Width')
-    # axs[0, 1].set_ylabel('Step Widths [microns]')
-    # [axs[1, 1].scatter(x, y, label=label) for x, y, label in
-    #     zip([scan_speeds, scan_speeds_back], [rms_noise, rms_noise_back], ['forward', 'backward'])]
-    # axs[1, 1].set_title('RMS Noise')
-    # axs[1, 1].set_ylabel('RMS [nm]')
-    # for i in range(2):
-    #     axs[i, 1].set_xlabel('Scanning Speed')
-    #     axs[i, 1].legend(title='Scan Direction')
-    # plt.show()
