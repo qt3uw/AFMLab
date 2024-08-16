@@ -130,7 +130,7 @@ class ScanData:
         peaks, _ = find_peaks(self.denoise())
         valleys, _ = find_peaks(-self.denoise())
 
-        print(peaks / ppm, valleys / ppm, sep='\n')
+        print('Maxima: ' + str(peaks / ppm), 'Minima: ' + str(valleys / ppm), sep='\n')
         return self
 
     def get_step_width(self, step_coords):
