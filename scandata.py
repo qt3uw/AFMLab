@@ -210,9 +210,11 @@ def get_step_volts_for_calibration(data):
 
 if __name__ == '__main__':
     myhair = get_scan_data_from_directory('FunScans')
-    myhair[0].get_edge(y_coord=2.5).volt_to_height().tilt_correct()
     fig, ax = plt.subplots(1, 1)
-    ax.plot(np.linspace(0, 20, myhair[0].res), myhair[0].data_slice)
+    coords = [8., 8., 4., 4.]
+    for scan, coord in zip(myhair, coords):
+        scan.plot_afm_image().get_edge(y_coord=coord).volt_to_height().tilt_correct()
+        ax.plot(np.linspace(0, scan.width, scan.res), scan.data_slice)
     ax.set_title('Slice of My Hair')
     ax.set_xlabel('x [microns]')
     ax.set_ylabel('height [nm]')

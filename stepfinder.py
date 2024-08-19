@@ -17,42 +17,40 @@ if __name__ == "__main__":
                   (0.608, 0.4224)]
 
     if not CREATE_STEPS:
-        # Run this loop first to find position of step for each scan
+        # find position of step for each scan
         for afmscan in afmscans:
             print(afmscan.backward)
             afmscan.get_edge().volt_to_height().find_features().plot_edge()
             plt.show()
     else:
-        scan_widths, edges, step_widths, back_step_widths, scan_speeds, back_scan_speeds, scan_rms, back_scan_rms = \
-            [[] for _ in range(8)]
-        # Run this loop to fill lists for plotting
-        i = 0
-        for afmscan, step in zip(afmscans, [item for pair in zip(steps, back_steps) for item in pair]):
-            afmscan.get_edge().volt_to_height().tilt_correct((0, step[1]))
-            if afmscan.backward:
-                back_scan_speeds.append(afmscan.speed)
-                back_step_widths.append(afmscan.get_step_width(step))
-                back_scan_rms.append(afmscan.get_noise((0, step[1])))
-            else:
-                scan_speeds.append(afmscan.speed)
-                step_widths.append(afmscan.get_step_width(step))
-                scan_rms.append(afmscan.get_noise((0, step[1])))
-            scan_widths.append(np.linspace(0, afmscan.width, afmscan.res))
-            edges.append(afmscan.denoise())
-
+        # empty lists for plotting
+        step_widths, back_step_widths, scan_speeds, back_scan_speeds, scan_rms, back_scan_rms = [[] for _ in range(6)]
+        # create plots
         fig = plt.figure()
         ax1 = plt.subplot2grid(shape=(2, 2), loc=(0, 0), colspan=2)
         ax2 = plt.subplot2grid(shape=(2, 2), loc=(1, 0))
         ax3 = plt.subplot2grid(shape=(2, 2), loc=(1, 1))
         axs = (ax1, ax2, ax3)
         [ax.grid(True) for ax in axs]
+        # fill empty lists with data and plot the edge
+        for afmscan, step in zip(afmscans, [item for pair in zip(steps, back_steps) for item in pair]):
+            afmscan.get_edge().volt_to_height().tilt_correct((0, step[1]))
+            # backward scans
+            if afmscan.backward:
+                back_scan_speeds.append(afmscan.speed)
+                back_step_widths.append(afmscan.get_step_width(step))
+                back_scan_rms.append(afmscan.get_noise((0, step[1])))
+            # forward scans
+            else:
+                scan_speeds.append(afmscan.speed)
+                step_widths.append(afmscan.get_step_width(step))
+                scan_rms.append(afmscan.get_noise((0, step[1])))
+            ax1.plot(np.linspace(0, afmscan.width, afmscan.res), afmscan.denoise())
 
-        # plot scan of edge
-        [ax1.plot(x, y, label=speed) for x, y, speed in zip(scan_widths, edges, scan_speeds)]
         ax1.set_title('Edge Resolution')
         ax1.set_xlabel('x [microns]')
         ax1.set_ylabel('height [nm]')
-        ax1.legend(title='Scan Speed [pps]')
+
         # plot step width against scan speed
         [ax2.scatter(x, y, label=direction) for x, y, direction in
          zip([scan_speeds, back_scan_speeds], [step_widths, back_step_widths], ['forward', 'backward'])]
