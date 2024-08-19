@@ -1,0 +1,80 @@
+Index: scratch.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import numpy as np\r\nfrom pathlib import Path\r\nimport os\r\nimport csv\r\nimport pandas as pd\r\n\r\nDATA_DIR = Path(r'C:\\Users\\QT3\\Documents\\EDUAFM Data')\r\n# for f in p.glob('*.csv').iterdir():\r\n#     print(f)\r\n# get_string = 'C:\\Users\\QT3\\Documents\\EDUAFM Data\r\n# # string = np.loadtxt(get_string, dtype=str, delimiter='_')\r\n# # print(string)\r\n\r\nwith open(r'C:\\Users\\QT3\\Documents\\EDUAFM Data\\Sample_ConstF_noStrainG_250px_100pps.csv', 'r') as file, open('test.csv', 'r') as test:\r\n    dataframe = pd.read_csv(file, delimiter=';', header=None)\r\n    test_file = pd.read_csv(test, delimiter=';', header=None)\r\n    print(dataframe, test_file)\r\n    dataframe.dropna(axis=1, how='all', inplace=True)\r\n    test_file.dropna(axis=1, how='all', inplace=True)\r\n    print(dataframe, test_file)\r\n    print(\"row 0, col 250 :\", dataframe.iat[0, 250])\r\n    print(\"row 0, col 2 :\", test_file.iat[0, 2])\r\n
+===================================================================
+diff --git a/scratch.py b/scratch.py
+--- a/scratch.py	
++++ b/scratch.py	
+@@ -1,22 +1,59 @@
+ import numpy as np
+ from pathlib import Path
++import matplotlib.pyplot as plt
+ import os
+ import csv
+ import pandas as pd
++from skimage import filters as flt, io
++from skimage.morphology import disk
++from skimage.util import img_as_ubyte
++from skimage.restoration import denoise_nl_means, estimate_sigma
++from skimage.exposure import rescale_intensity
+ 
+ DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM Data')
+-# for f in p.glob('*.csv').iterdir():
+-#     print(f)
+-# get_string = 'C:\Users\QT3\Documents\EDUAFM Data
+ # # string = np.loadtxt(get_string, dtype=str, delimiter='_')
+ # # print(string)
+ 
+-with open(r'C:\Users\QT3\Documents\EDUAFM Data\Sample_ConstF_noStrainG_250px_100pps.csv', 'r') as file, open('test.csv', 'r') as test:
+-    dataframe = pd.read_csv(file, delimiter=';', header=None)
+-    test_file = pd.read_csv(test, delimiter=';', header=None)
+-    print(dataframe, test_file)
+-    dataframe.dropna(axis=1, how='all', inplace=True)
+-    test_file.dropna(axis=1, how='all', inplace=True)
+-    print(dataframe, test_file)
+-    print("row 0, col 250 :", dataframe.iat[0, 250])
+-    print("row 0, col 2 :", test_file.iat[0, 2])
++# with open(r'C:\Users\QT3\Documents\EDUAFM\Scans\TestSample_ConstantForce_StrainGauge_Res250px_Speed100pps_zoom_3.5micron.csv', 'r') as file:
++#     dataframe = pd.read_csv(file, delimiter=';', header=None)
++#     data = dataframe.to_numpy()[:, :-1].astype(float)
++#     print(data)
++#     file_info = str(r'TestSample_ConstantForce_StrainGauge_Res250px_Speed100pps_zoom_3.5micron.csv')[:-4].split('_')
++#     print(file_info)
++
++fig = plt.figure()
++fig.set_figheight(6)
++fig.set_figwidth(6)
++
++ax1 = plt.subplot2grid(shape=(3, 3), loc=(0, 0), colspan=3)
++ax2 = plt.subplot2grid(shape=(3, 3), loc=(1, 0), colspan=1)
++ax3 = plt.subplot2grid(shape=(3, 3), loc=(1, 2), rowspan=2)
++ax4 = plt.subplot2grid((3, 3), (2, 0))
++ax5 = plt.subplot2grid((3, 3), (2, 1), colspan=1)
++
++x = np.arange(0, 10, 0.1)
++y = np.cos(x)
++
++ax1.plot(x, y)
++ax1.set_title('ax1')
++ax2.plot(x, y)
++ax2.set_title('ax2')
++
++
++fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(7, 7), gridspec_kw={
++    'width_ratios': [3, 3],
++    'height_ratios': [3, 3],
++    'wspace': 0.4,
++    'hspace': 0.4
++})
++
++x = np.arange(0, 10, 0.1)
++y = np.tan(x)
++
++ax[0][0].plot(x, y)
++ax[0][1].plot(x, y)
++ax[1][0].plot(x, y)
++ax[1][1].plot(x, y)
++
++plt.show()
++

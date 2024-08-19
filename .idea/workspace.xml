@@ -1,24 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="SCOPE_TYPE" value="3" />
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9f4d497c-1991-42d9-8433-3b64326f3205" name="Changes" comment="commit 4: use dataframes, try to delete empty columns">
-      <change afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/QT3-AFMLab.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/QT3-AFMLab.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="9f4d497c-1991-42d9-8433-3b64326f3205" name="Changes" comment="CREATE_STEPS for cases for loops">
+      <change beforePath="$PROJECT_DIR$/.idea/other.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]2/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]3/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]4/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]5/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase_[Changes]6/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_2.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_3.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_4.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_5.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_rebase__Changes_6.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_data.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/oop.py" beforeDir="false" afterPath="$PROJECT_DIR$/oop.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scratch.py" beforeDir="false" afterPath="$PROJECT_DIR$/scratch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stepfinder.py" beforeDir="false" afterPath="$PROJECT_DIR$/stepfinder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.csv" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="MIXED" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -28,7 +55,7 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/qt3uw/AFMLab.git&quot;,
+    &quot;url&quot;: &quot;git@github.com:qt3uw/AFMLab.git&quot;,
     &quot;accountId&quot;: &quot;cc302eb6-3c8a-40a3-ba72-cc7cea892e63&quot;
   }
 }</component>
@@ -44,38 +71,46 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.main.executor": "Run",
-    "Python.scratch.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "database.data.extractors.current.export.id": "Semicolon-separated_id",
-    "database.data.extractors.current.id": "Semicolon-separated_id",
-    "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/QT3/PycharmProjects/AFMLab/test.csv",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "vcs.Git",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.oop.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scratch.executor&quot;: &quot;Run&quot;,
+    &quot;Python.stepfinder.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ToolWindowPlots.ShowToolbar&quot;: &quot;false&quot;,
+    &quot;database.data.extractors.current.export.id&quot;: &quot;Semicolon-separated_id&quot;,
+    &quot;database.data.extractors.current.id&quot;: &quot;Semicolon-separated_id&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/QT3/PycharmProjects/AFMLab&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "TEXT",
-      "Python"
+  &quot;keyToStringList&quot;: {
+    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;,
+      &quot;module&quot;,
+      &quot;repository&quot;
+    ],
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;TEXT&quot;,
+      &quot;Python&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\QT3\PycharmProjects\AFMLab" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.oop">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="QT3-AFMLab" />
       <option name="ENV_FILES" value="" />
@@ -91,6 +126,29 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="oop" type="PythonConfigurationType" factoryName="Python">
+      <module name="QT3-AFMLab" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\QT3\PycharmProjects\AFMLab" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\QT3\PycharmProjects\AFMLab\scandata.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -122,9 +180,34 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="stepfinder" type="PythonConfigurationType" factoryName="Python">
+      <module name="QT3-AFMLab" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\QT3\PycharmProjects\AFMLab" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/stepfinder.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Python.scratch" />
       <item itemvalue="Python.main" />
+      <item itemvalue="Python.oop" />
+      <item itemvalue="Python.stepfinder" />
     </list>
   </component>
   <component name="SharedIndexes">
@@ -145,89 +228,415 @@
       <updated>1720551712931</updated>
       <workItem from="1720551714413" duration="16228000" />
       <workItem from="1721065746436" duration="32438000" />
-      <workItem from="1721250479951" duration="3103000" />
+      <workItem from="1721250479951" duration="6252000" />
+      <workItem from="1721324399879" duration="35670000" />
+      <workItem from="1721668903592" duration="17595000" />
+      <workItem from="1721754285874" duration="16973000" />
+      <workItem from="1721838961234" duration="38475000" />
+      <workItem from="1722273357090" duration="18739000" />
+      <workItem from="1722293940923" duration="43000" />
+      <workItem from="1722359304500" duration="23421000" />
+      <workItem from="1722447487360" duration="17818000" />
+      <workItem from="1722533633063" duration="75899000" />
+      <workItem from="1723139180813" duration="12054000" />
+      <workItem from="1723222964768" duration="13714000" />
+      <workItem from="1723490705676" duration="31114000" />
+      <workItem from="1723653764929" duration="47301000" />
+      <workItem from="1724093731354" duration="4033000" />
     </task>
-    <task id="LOCAL-00001" summary="commit 3: get_afm_data">
+    <task id="LOCAL-00012" summary="index numpy array to get rid of empty column, plot with subplots">
       <option name="closed" value="true" />
-      <created>1721086672109</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
+      <created>1721257065674</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
       <option name="project" value="LOCAL" />
-      <updated>1721086672109</updated>
+      <updated>1721257065674</updated>
     </task>
-    <task id="LOCAL-00002" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00013" summary="index numpy array to get rid of empty column, plot with subplots">
       <option name="closed" value="true" />
-      <created>1721162150026</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
+      <created>1721257397041</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
       <option name="project" value="LOCAL" />
-      <updated>1721162150026</updated>
+      <updated>1721257397041</updated>
     </task>
-    <task id="LOCAL-00003" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00014" summary="consolidate create_image">
       <option name="closed" value="true" />
-      <created>1721248250320</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
+      <created>1721257462041</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
       <option name="project" value="LOCAL" />
-      <updated>1721248250320</updated>
+      <updated>1721257462041</updated>
     </task>
-    <task id="LOCAL-00004" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00015" summary="create tuple with numpy array and scan parameters">
       <option name="closed" value="true" />
-      <created>1721248430402</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
+      <created>1721334863617</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
       <option name="project" value="LOCAL" />
-      <updated>1721248430402</updated>
+      <updated>1721334863617</updated>
     </task>
-    <task id="LOCAL-00005" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00016" summary="skimage canny edge detection">
       <option name="closed" value="true" />
-      <created>1721248680923</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
+      <created>1721338947770</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
       <option name="project" value="LOCAL" />
-      <updated>1721248680923</updated>
+      <updated>1721338947770</updated>
     </task>
-    <task id="LOCAL-00006" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00017" summary="comparing different skimage edge detection operators">
       <option name="closed" value="true" />
-      <created>1721248820583</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
+      <created>1721342373623</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
       <option name="project" value="LOCAL" />
-      <updated>1721248820583</updated>
+      <updated>1721342373623</updated>
     </task>
-    <task id="LOCAL-00007" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00018" summary="plot scans across edges with measured edge coordinates, doesn't make sense yet">
       <option name="closed" value="true" />
-      <created>1721248853696</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
+      <created>1721425321514</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
       <option name="project" value="LOCAL" />
-      <updated>1721248853696</updated>
+      <updated>1721425321514</updated>
     </task>
-    <task id="LOCAL-00008" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00019" summary="filter for zoomed images, have to figure out ppm and scale for zoom image">
       <option name="closed" value="true" />
-      <created>1721250597095</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
+      <created>1721429936250</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
       <option name="project" value="LOCAL" />
-      <updated>1721250597095</updated>
+      <updated>1721429936250</updated>
     </task>
-    <task id="LOCAL-00009" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00020" summary="filter for zoomed images, have to figure out ppm and scale for zoom image">
       <option name="closed" value="true" />
-      <created>1721252453431</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
+      <created>1721682128085</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
       <option name="project" value="LOCAL" />
-      <updated>1721252453431</updated>
+      <updated>1721682128085</updated>
     </task>
-    <task id="LOCAL-00010" summary="commit 4: use dataframes, try to delete empty columns">
+    <task id="LOCAL-00021" summary="use zoomed images in get_edge, scan across the entire image at the midpoint for horizontal and vertical axes">
       <option name="closed" value="true" />
-      <created>1721253711879</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
+      <created>1721682269280</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
       <option name="project" value="LOCAL" />
-      <updated>1721253711879</updated>
+      <updated>1721682269280</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00022" summary="use zoomed images in get_edge, scan across the entire image at the midpoint for horizontal and vertical axes">
+      <option name="closed" value="true" />
+      <created>1721689924306</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1721689924306</updated>
+    </task>
+    <task id="LOCAL-00023" summary="plot zoomed images of edges on top of each other">
+      <option name="closed" value="true" />
+      <created>1721760551030</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1721760551030</updated>
+    </task>
+    <task id="LOCAL-00024" summary="return list of sliced scan data in find_edge">
+      <option name="closed" value="true" />
+      <created>1721764206373</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1721764206373</updated>
+    </task>
+    <task id="LOCAL-00025" summary="check for zoom in find_edges">
+      <option name="closed" value="true" />
+      <created>1721770292193</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1721770292193</updated>
+    </task>
+    <task id="LOCAL-00026" summary="return tuple of data and width in find_edges for input of get_step_width">
+      <option name="closed" value="true" />
+      <created>1721864692046</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1721864692046</updated>
+    </task>
+    <task id="LOCAL-00027" summary="tilt_correction and create_plot">
+      <option name="closed" value="true" />
+      <created>1722028990133</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1722028990133</updated>
+    </task>
+    <task id="LOCAL-00028" summary="tilt_correction and create_plot">
+      <option name="closed" value="true" />
+      <created>1722037245242</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1722037245242</updated>
+    </task>
+    <task id="LOCAL-00029" summary="get_pktopk">
+      <option name="closed" value="true" />
+      <created>1722284611314</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1722284611314</updated>
+    </task>
+    <task id="LOCAL-00030" summary="volt_to_height">
+      <option name="closed" value="true" />
+      <created>1722293909705</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1722293909705</updated>
+    </task>
+    <task id="LOCAL-00031" summary="added to create_plot, regions for get_step_width and get_noise are better defined">
+      <option name="closed" value="true" />
+      <created>1722384229575</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1722384229575</updated>
+    </task>
+    <task id="LOCAL-00032" summary="denoise function to help define step region">
+      <option name="closed" value="true" />
+      <created>1722460428547</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1722460428547</updated>
+    </task>
+    <task id="LOCAL-00033" summary="filter_data">
+      <option name="closed" value="true" />
+      <created>1722464159558</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1722464159558</updated>
+    </task>
+    <task id="LOCAL-00034" summary="filter_data">
+      <option name="closed" value="true" />
+      <created>1722467136258</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1722467136258</updated>
+    </task>
+    <task id="LOCAL-00035" summary="get_parameter">
+      <option name="closed" value="true" />
+      <created>1722540639558</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1722540639558</updated>
+    </task>
+    <task id="LOCAL-00036" summary="get_parameter">
+      <option name="closed" value="true" />
+      <created>1722547117248</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1722547117248</updated>
+    </task>
+    <task id="LOCAL-00037" summary="get_parameter not working yet">
+      <option name="closed" value="true" />
+      <created>1722556534834</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1722556534834</updated>
+    </task>
+    <task id="LOCAL-00038" summary="get_parameter return dataframe with all parameters or fetch one parameter from data set">
+      <option name="closed" value="true" />
+      <created>1722641606713</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1722641606713</updated>
+    </task>
+    <task id="LOCAL-00039" summary="fixed small bugs with iterating None type, printing dataframes">
+      <option name="closed" value="true" />
+      <created>1722884853619</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1722884853619</updated>
+    </task>
+    <task id="LOCAL-00040" summary="fix calibration factor">
+      <option name="closed" value="true" />
+      <created>1722900325860</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1722900325860</updated>
+    </task>
+    <task id="LOCAL-00041" summary="fixed calibration factor in volt_to_height,&#10;added comments for every function">
+      <option name="closed" value="true" />
+      <created>1722980220049</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1722980220049</updated>
+    </task>
+    <task id="LOCAL-00042" summary="added constant height mode calibration factor, problem with plotting constant height scan">
+      <option name="closed" value="true" />
+      <created>1723075477210</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1723075477210</updated>
+    </task>
+    <task id="LOCAL-00043" summary="fixed plotting issue with np.shape(), calibration works">
+      <option name="closed" value="true" />
+      <created>1723145345388</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1723145345388</updated>
+    </task>
+    <task id="LOCAL-00044" summary="change names to distinguish constant force and constant height">
+      <option name="closed" value="true" />
+      <created>1723160892222</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1723160892222</updated>
+    </task>
+    <task id="LOCAL-00045" summary="object oriented programming notes">
+      <option name="closed" value="true" />
+      <created>1723241069249</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1723241069249</updated>
+    </task>
+    <task id="LOCAL-00046" summary="object oriented programming notes">
+      <option name="closed" value="true" />
+      <created>1723506700230</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1723506700230</updated>
+    </task>
+    <task id="LOCAL-00047" summary="create_from_filepath works">
+      <option name="closed" value="true" />
+      <created>1723571317083</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1723571317083</updated>
+    </task>
+    <task id="LOCAL-00048" summary="plot_afm_image">
+      <option name="closed" value="true" />
+      <created>1723576750894</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1723576750894</updated>
+    </task>
+    <task id="LOCAL-00049" summary="oop.py can do the same as main.py">
+      <option name="closed" value="true" />
+      <created>1723587324901</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1723587324901</updated>
+    </task>
+    <task id="LOCAL-00050" summary="calling methods with . instead of passing through arguments, plotting using lists">
+      <option name="closed" value="true" />
+      <created>1723657908921</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1723657908921</updated>
+    </task>
+    <task id="LOCAL-00051" summary="trying to plot forward vs backward">
+      <option name="closed" value="true" />
+      <created>1723662599062</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1723662599062</updated>
+    </task>
+    <task id="LOCAL-00052" summary="accomplished same functionality with oop">
+      <option name="closed" value="true" />
+      <created>1723669284729</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1723669284729</updated>
+    </task>
+    <task id="LOCAL-00053" summary="fix tilt_correct">
+      <option name="closed" value="true" />
+      <created>1723676126869</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1723676126869</updated>
+    </task>
+    <task id="LOCAL-00054" summary="fixed tilt_correct">
+      <option name="closed" value="true" />
+      <created>1723744378168</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1723744378168</updated>
+    </task>
+    <task id="LOCAL-00055" summary="fixed get_step_width, stepfinder file">
+      <option name="closed" value="true" />
+      <created>1723764354168</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1723764354168</updated>
+    </task>
+    <task id="LOCAL-00056" summary="CREATE_STEPS for cases for loops">
+      <option name="closed" value="true" />
+      <created>1723835923897</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1723835923897</updated>
+    </task>
+    <task id="LOCAL-00057" summary="better version of get_step_width and get_noise">
+      <option name="closed" value="true" />
+      <created>1723840846708</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1723840846708</updated>
+    </task>
+    <task id="LOCAL-00058" summary="plotting in step_finder">
+      <option name="closed" value="true" />
+      <created>1723843992203</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1723843992203</updated>
+    </task>
+    <task id="LOCAL-00059" summary="scandata and stepfinder">
+      <option name="closed" value="true" />
+      <created>1724097323911</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1724097323911</updated>
+    </task>
+    <task id="LOCAL-00060" summary="requirements">
+      <option name="closed" value="true" />
+      <created>1724097771934</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1724097771934</updated>
+    </task>
+    <option name="localTasksCounter" value="61" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -267,17 +676,17 @@
             <list>
               <RecentGroup>
                 <option name="FILTER_VALUES">
+                  <option value="master" />
+                </option>
+              </RecentGroup>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
                   <option value="HEAD" />
                 </option>
               </RecentGroup>
               <RecentGroup>
                 <option name="FILTER_VALUES">
                   <option value="origin/master" />
-                </option>
-              </RecentGroup>
-              <RecentGroup>
-                <option name="FILTER_VALUES">
-                  <option value="master" />
                 </option>
               </RecentGroup>
             </list>
@@ -295,7 +704,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="HEAD" />
+                        <option value="master" />
                       </list>
                     </value>
                   </entry>
@@ -316,14 +725,38 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="commit 2: comments added" />
-    <MESSAGE value="commit 3: get_afm_data" />
-    <MESSAGE value="commit 4: use dataframes, try to delete empty columns" />
-    <option name="LAST_COMMIT_MESSAGE" value="commit 4: use dataframes, try to delete empty columns" />
+    <MESSAGE value="filter_data" />
+    <MESSAGE value="get_parameter" />
+    <MESSAGE value="get_parameter not working yet" />
+    <MESSAGE value="get_parameter return dataframe with all parameters or fetch one parameter from data set" />
+    <MESSAGE value="fixed small bugs with iterating None type, printing dataframes" />
+    <MESSAGE value="fix calibration factor" />
+    <MESSAGE value="fixed calibration factor in volt_to_height,&#10;added comments for every function" />
+    <MESSAGE value="added constant height mode calibration factor, problem with plotting constant height scan" />
+    <MESSAGE value="fixed plotting issue with np.shape(), calibration works" />
+    <MESSAGE value="change names to distinguish constant force and constant height" />
+    <MESSAGE value="object oriented programming notes" />
+    <MESSAGE value="create_from_filepath works" />
+    <MESSAGE value="plot_afm_image" />
+    <MESSAGE value="oop.py can do the same as main.py" />
+    <MESSAGE value="calling methods with . instead of passing through arguments, plotting using lists" />
+    <MESSAGE value="trying to plot forward vs backward" />
+    <MESSAGE value="accomplished same functionality with oop" />
+    <MESSAGE value="fix tilt_correct" />
+    <MESSAGE value="fixed tilt_correct" />
+    <MESSAGE value="fixed get_step_width, stepfinder file" />
+    <MESSAGE value="CREATE_STEPS for cases for loops" />
+    <MESSAGE value="better version of get_step_width and get_noise" />
+    <MESSAGE value="plotting in step_finder" />
+    <MESSAGE value="scandata and stepfinder" />
+    <MESSAGE value="requirements" />
+    <option name="LAST_COMMIT_MESSAGE" value="requirements" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/AFMLab$main.coverage" NAME="main Coverage Results" MODIFIED="1721161977370" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/AFMLab$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1721161504634" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\QT3\PycharmProjects\AFMLab" />
+    <SUITE FILE_PATH="coverage/AFMLab$oop.coverage" NAME="oop Coverage Results" MODIFIED="1724096873060" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\QT3\PycharmProjects\AFMLab" />
+    <SUITE FILE_PATH="coverage/AFMLab$stepfinder.coverage" NAME="stepfinder Coverage Results" MODIFIED="1724096631240" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\QT3\PycharmProjects\AFMLab" />
+    <SUITE FILE_PATH="coverage/AFMLab$main.coverage" NAME="main Coverage Results" MODIFIED="1723501430525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/AFMLab$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1724095726817" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="C:\Users\QT3\PycharmProjects\AFMLab" />
     <SUITE FILE_PATH="coverage/QT3_AFMLab$main.coverage" NAME="main Coverage Results" MODIFIED="1720641343294" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
