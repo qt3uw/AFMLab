@@ -27,6 +27,8 @@ class ScanData:
     backward: bool = False
     data: np.ndarray = field(default_factory=list)
     data_slice: np.ndarray = field(default_factory=list)
+    cf_calibrate: float = VOLTS_PER_NM_CF
+    ch_calibrate: float = VOLTS_PER_NM_CH
 
     def create_from_filepath(self, file_path):
         """
@@ -89,9 +91,9 @@ class ScanData:
 
     def volt_to_height(self):
         if self.mode.lower() == 'constantforce':
-            volts_per_nm = VOLTS_PER_NM_CF
+            volts_per_nm = self.cf_calibrate
         else:
-            volts_per_nm = VOLTS_PER_NM_CH
+            volts_per_nm = self.ch_calibrate
 
         set_zero = abs(self.data_slice - np.max(self.data_slice))
         self.data_slice = np.divide(set_zero, volts_per_nm)
@@ -211,11 +213,12 @@ def get_step_volts_for_calibration(data):
 if __name__ == '__main__':
     myhair = get_scan_data_from_directory('FunScans')
     fig, ax = plt.subplots(1, 1)
-    coords = [8., 8., 4., 4.]
+    coords = [7.5, 7.5, 4., 4.]
     for scan, coord in zip(myhair, coords):
         scan.plot_afm_image().get_edge(y_coord=coord).volt_to_height().tilt_correct()
         ax.plot(np.linspace(0, scan.width, scan.res), scan.data_slice)
     ax.set_title('Slice of My Hair')
     ax.set_xlabel('x [microns]')
     ax.set_ylabel('height [nm]')
+    ax.grid(True)
     plt.show()
