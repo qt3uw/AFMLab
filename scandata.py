@@ -10,12 +10,32 @@ from scipy.signal import savgol_filter, find_peaks
 
 
 DATA_DIR = Path(r'C:\Users\QT3\Documents\EDUAFM')
-VOLTS_PER_NM_CF = 0.6363846153846155 / 114
-VOLTS_PER_NM_CH = 0.10349999999999998 / 114
+# VOLTS_PER_NM_CF = 0.6363846153846155 / 114
+VOLTS_PER_NM_CF = None
+# VOLTS_PER_NM_CH = 0.10349999999999998 / 114
+VOLTS_PER_NM_CH = None
 
 
 @dataclass
 class ScanData:
+    """
+    This is a class for image analysis of an afm scan.
+
+    Attributes:
+        name: name of the scan
+        width: width of the scan in microns
+        res: resolution of the scan in pixels. 250 means 250 x 250 px
+        speed: speed of the scan in pixels per second
+        mode: mode of the scan. either constant force or constant height
+        straingauge: strain gauge on or off
+        pid: pid values of the scan. (p, i, d)
+        lateral: lateral force on or off
+        backward: forward or backward
+        data: scan data
+        data_slice: one horizontal sweep of the scan
+        cf_calibrate: calibration factor in constant force mode
+        ch_calibrate: calibration factor in constant height mode
+    """
     name: str = 'Sample'
     width: float = 20.
     res: int = 250
@@ -32,8 +52,9 @@ class ScanData:
 
     def create_from_filepath(self, file_path):
         """
-        This method takes an AFM data filepath and modifies the instance of ScanData to store parameter data
-        :param file_path:
+        This method takes an AFM data filepath and modifies the instance of ScanData to store parameter data.
+
+        :param str file_path: file path of the afm scan
         :return: self
         """
 
@@ -62,16 +83,27 @@ class ScanData:
         return self
 
     def plot_afm_image(self):
+        """
+        This method plots the afm scan data array as a color plot.
+
+        :return: self
+        """
         fig, ax = plt.subplots(1, 1)
         cax = ax.imshow(self.data, extent=[0, self.width, self.width, 0])
         fig.colorbar(cax)
-        ax.set_title('AFM Scan Image')
+        ax.set_title('AFM Scan Voltage Image of' + self.name)
         ax.set_xlabel('x [microns]')
         ax.set_ylabel('y [microns]')
         # plt.show()
         return self
 
     def get_edge(self, y_coord=None):
+        """
+        This method picks out a single horizontal sweep of the scan and assigns it to the data_slice attribute.
+
+        :param float y_coord: y coordinate of the sweep of interest. default is the midpoint of the scan.
+        :return: self
+        """
         ppm = self.res / self.width
         if y_coord is None:
             y_coord = self.width / 2
@@ -81,6 +113,11 @@ class ScanData:
         return self
 
     def plot_edge(self):
+        """
+        This method plots the sweep of the scan selected in the get_edge() method.
+
+        :return: self
+        """
         fig, ax = plt.subplots(1, 1)
         ax.plot(np.linspace(0, self.width, self.res), self.data_slice)
         ax.set_title('Horizontal Slice of ' + self.name)
@@ -90,6 +127,11 @@ class ScanData:
         return self
 
     def volt_to_height(self):
+        """
+        This method converts voltage to height.
+
+        :return: self
+        """
         if self.mode.lower() == 'constantforce':
             volts_per_nm = self.cf_calibrate
         else:
@@ -101,6 +143,12 @@ class ScanData:
         return self
 
     def tilt_correct(self, linear_coords=None):
+        """
+        This method corrects for a linear tilt in the scan data.
+
+        :param tuple linear_coords: start and end coordinates of the linear region of a sweep.
+        :return: self
+        """
         ppm = self.res / self.width
         if linear_coords is None:
             start, end = 0, self.res
@@ -122,22 +170,36 @@ class ScanData:
         return self
 
     def denoise(self):
+        """
+        This method reduces noise in a sweep of the scan.
+
+        :return: self
+        """
         smooth = savgol_filter(self.data_slice, 8, 1)
 
         return smooth
 
     def find_features(self):
+        """
+        This method finds maxima and minima in a sweep of the scan and prints them as lists.
+
+        :return: self
+        """
         ppm = self.res / self.width
         peaks, _ = find_peaks(self.denoise())
         valleys, _ = find_peaks(-self.denoise())
 
         print('Maxima: ' + str(peaks / ppm), 'Minima: ' + str(valleys / ppm), sep='\n')
+
         return self
 
     def get_step_width(self, step_coords):
         """
-        :param step_coords: tuple
-        :return: float
+        This method calculates the width of a step in a sweep of the scan.
+
+        :param tuple step_coords: x-coordinates of the top and bottom of the step.
+        :return: step_width
+        :rtype: float
         """
         ppm = self.res / self.width
         # index of top and bottom of step
@@ -156,8 +218,10 @@ class ScanData:
 
     def get_noise(self, flat_coords):
         """
-        :param flat_coords: tuple
-        :return: float
+        This method calculates the rms deviation of a sweep of the scan.
+        :param tuple flat_coords: start and end coordinates of the flat region in a sweep.
+        :return : rms of the sweep
+        :rtype: float
         """
         ppm = self.res / self.width
         # index of start and end of flat region
@@ -170,11 +234,13 @@ class ScanData:
 
 def get_scan_data_from_directory(folder_name, includes=None, excludes=None):
     """
-    This function takes a folder name and creates a ScanData instance for every allowed file the folder
-    :param folder_name: String
-    :param includes: List of strings
-    :param excludes: List of strings
-    :return: List of ScanData instances
+    This function takes a folder name and creates a ScanData instance for every allowed file the folder.
+
+    :param str folder_name: name of the folder
+    :param str includes: keywords in the file name to include
+    :param str excludes: keywords in the file name to exclude
+    :return: list of ScanData instances
+    :rtype: list
     """
     folder_path = os.path.join(DATA_DIR, folder_name)
 
@@ -199,15 +265,17 @@ def get_scan_data_from_directory(folder_name, includes=None, excludes=None):
 
 def get_step_volts_for_calibration(data):
     """
-    This function takes a list of data arrays and calculates the average peak to peak voltage for height calibration
-    :param data: numpy array
-    :return: float
-    """
-    step_heights = []
-    for scan in data:
-        step_heights.append(np.ptp(scan))
+    This function takes a list of arrays and calculates the average peak to peak voltage for height calibration.
 
-    return np.mean(step_heights)
+    :param list data: horizontal slices of the scan data
+    :return: mean peak to peak voltage of the step
+    :rtype: float
+    """
+    step_volts = []
+    for scan in data:
+        step_volts.append(np.ptp(scan))
+
+    return np.mean(step_volts)
 
 
 if __name__ == '__main__':
